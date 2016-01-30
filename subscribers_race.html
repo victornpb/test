@@ -34,7 +34,7 @@ iframe{
 </style>
 </head>
 <body>
-<h1>Who's gonna get there?</h1>
+<h1 id="h1">Who's gonna get there?</h1>
 <!-- Youtube competition -->
 
 <iframe src="http://www.livecounts.x10host.com/?channel=apdnoficial"></iframe>
@@ -43,3 +43,33 @@ iframe{
 
 </body>
 </html>
+<script>
+  var items = [
+      "Who's gonna get there?",
+      "1K?",
+      "Falta quanto?",
+      "E ai falta muito?",
+      "Se increve em mim",
+      "Tenho mais subs que o PewDiePie",
+      "Eba ganhei mais um inscrito",
+      "Olhe de novo daqui a 5min",
+      "Eita tio, tá subindo?",
+      "Já tem mil inscritos?",
+      "Ve se não quebra a sua placa",
+      "Divulga sa porra",
+      "Quem tá na frente?",
+      "Tente novamente",
+      "F5 F5 F5 F5 F5",
+      "Já se inscreveu?!",
+      "Vamo! Vamo! Vamo!",
+      "Sobe contador!",
+      "Homeu, Homeu quem te ...",
+      "Tio esse contador nao sobe",
+      "já tenho 1000 inscritos?",
+      "Olha de novo daqui um pouquinho",
+    ];
+  var item = items[Math.floor(Math.random()*items.length)];
+  
+  h1.innerHTML = item;
+  
+</script>
