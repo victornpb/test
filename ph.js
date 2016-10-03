@@ -29,7 +29,8 @@ var self = this;
             else console.log('c is null');
             
             ifr.onload = function(){
-                ifr.height = c.contentWindow.document.body.scrollHeight;
+                console.log(ifr.contentWindow.document.body.scrollHeight);
+                ifr.height = ifr.contentWindow.document.body.scrollHeight;
             
             }
         },
