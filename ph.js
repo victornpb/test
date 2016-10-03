@@ -9,7 +9,9 @@ var self = this;
     var Ph = {
         setAccount : function(str){
             console.log('setAccount');
-            console.log(str)
+            
+            str = str.match(/PH\-(\d{0,11})\-(\d)/);
+            console.log(str);
             account = str;
             
             
@@ -19,7 +21,7 @@ var self = this;
             console.log(id, ver, container);
             
             var ifr = document.createElement('iframe');
-            ifr.src = 'https://victornpb.github.io/test/'+account+'/'+id;
+            ifr.src = 'https://victornpb.github.io/test/'+account[1]+'/'+id;
             ifr.width = "100%";
             
             var c = document.querySelector(container);
