@@ -27,6 +27,11 @@ var self = this;
             var c = document.querySelector(container);
             if(c) c.appendChild(ifr);
             else console.log('c is null');
+            
+            c.onload = function(){
+                c.height = c.contentWindow.document.body.scrollHeight;
+            
+            }
         },
     };
     
