@@ -21,7 +21,7 @@ var self = this;
             console.log(id, ver, container);
             
             var ifr = document.createElement('iframe');
-            ifr.src = '//victornpb.github.io/test/'+account[1]+'/'+id;
+            ifr.src = 'https://victornpb.github.io/test/'+account[1]+'/'+id;
             ifr.width = "100%";
             
             var c = document.querySelector(container);
