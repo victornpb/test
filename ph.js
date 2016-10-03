@@ -8,7 +8,7 @@
     
     
     var account;
-    o.q.each(function(cmd){
+    o.q.forEach(function(cmd){
         
         var fn = cmd.splice(0,1);
         Ph[fn].apply(Ph, cmd);
