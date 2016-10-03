@@ -28,8 +28,8 @@ var self = this;
             if(c) c.appendChild(ifr);
             else console.log('c is null');
             
-            c.onload = function(){
-                c.height = c.contentWindow.document.body.scrollHeight;
+            ifr.onload = function(){
+                ifr.height = c.contentWindow.document.body.scrollHeight;
             
             }
         },
