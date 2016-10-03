@@ -8,10 +8,18 @@
             console.log('setAccount');
             console.log(str)
             account = str;
+            
+            
         },
         showProduct : function(id, ver, container){
             console.log('showProduct');
             console.log(id, ver, container);
+            
+            var ifr = document.createElement('iframe');
+            ifr.src = 'https://victornpb.github.io/test/'+account+'/'+id;
+            ifr.width = "100%";
+            
+            document.querySelector(container).appendChild(ifr);
         },
     };
     
