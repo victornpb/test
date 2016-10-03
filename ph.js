@@ -9,6 +9,7 @@
     
     var account;
     o.q.forEach(function(cmd){
+        cmd = Array.prototype.slice.call(cmd);
         
         var fn = cmd.splice(0,1);
         Ph[fn].apply(Ph, cmd);
