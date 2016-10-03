@@ -1,5 +1,8 @@
-(function(){
-    var self = this;
+(function(fn){var d=document;(d.readyState=='loading')?d.addEventListener('DOMContentLoaded',fn):fn();})(function(){ //ready IE9
+
+
+
+var self = this;
     
     console.log("PLACEHOLDER!");
     
@@ -19,7 +22,9 @@
             ifr.src = 'https://victornpb.github.io/test/'+account+'/'+id;
             ifr.width = "100%";
             
-            document.querySelector(container).appendChild(ifr);
+            var c = document.querySelector(container);
+            if(c) c.appendChild(ifr);
+            else console.log('c is null');
         },
     };
     
@@ -36,5 +41,6 @@
         var fn = cmd.splice(0,1);
         Ph[fn].apply(Ph, cmd);
     });
-    
-})();
+   
+
+});
