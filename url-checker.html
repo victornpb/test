@@ -61,7 +61,7 @@
                     <tr height="0">
                         <td colspan="3">
                             URLS: <button id="loadUrls">📥 LOAD</button>
-                            <button id="openAll">OPEN ALL IN TABS 🗂</button>
+                            <button id="openAll" data-normal="OPEN ALL IN TABS 🗂" data-other="🚫 STOP OPENING TABS!">OPEN ALL IN TABS 🗂</button>
                             
                         </td>
                     </tr>
@@ -165,7 +165,7 @@
             else{
                 popupSequence = false;
                 alert("FINISHED!"+ ` Popup ${i+1} / ${urlsArray.length}`);
-                openAll.innerHTML = "OPEN ALL IN TABS";
+                openAll.innerHTML = openAll.getAttribute('data-normal');
             }
         }
 
@@ -179,7 +179,7 @@
             popupSequence = false;
             alert("OK I will stop!");
         }
-        openAll.innerHTML = popupSequence ? "🚫 STOP OPENING TABS!":"OPEN ALL IN TABS";
+        openAll.innerHTML = popupSequence ? openAll.getAttribute('data-other') : openAll.getAttribute('data-normal');
         
     };
     
@@ -187,6 +187,7 @@
         var popup = window.open(url);
         if(!popup){
             alert("Please disable POPUP Blocker!");
+            onclose();
         }
         else {
             //opened
