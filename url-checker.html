@@ -57,6 +57,18 @@
         padding-left: 1em;
         
     }
+    
+    kbd{
+        font-family: sans-serif;
+        font-size: 7pt;
+        color: gray;
+        border: 1px solid silver;
+        border-radius: 2px;
+        padding: 0 1px;
+    }
+    button{
+        white-space: nowrap;
+    }
     </style>
 </head>
 
@@ -69,7 +81,7 @@
                     <tr height="0">
                         <td colspan="3">
                             <button id="loadUrls">📥 LOAD</button> <button id="clearUrls">✖️ CLEAR</button>
-                            <button id="openAll" data-normal="OPEN IN TABS 🗂" data-other="🚫 STOP OPENING TABS!">USE TABS 🗂</button>
+                            <button id="openAll" data-normal="OPEN IN TABS 🗂" data-other="✋ STOP OPENING TABS!">OPEN IN TABS 🗂</button>
                             
                             <label><input id="afterFlag" type="checkbox">Flag on tab close</label>
                         </td>
@@ -92,21 +104,26 @@
                             
                             <button id="prev">⬅️ PREV</button>
                             <button id="next">NEXT ➡️</button>
-                            <br>
-                            <button id="flag">📌 FLAG (shift)</button>
-                            <button id="exportFlags">📋 EXPORT FLAGS</button>
+                            
+                            
                         </td>
                     </tr>
                     
                     <tr height="0">
-                        <td colspan="3">
-                            <button id="go">GO ➽ (enter)</button>
-                            <button id="openExt">OPEN IN NEW ⏏ (TAB)</button>
+                        <td class="center" colspan="3">
+                            <button id="exportFlags">📋 EXPORT FLAGS</button>
+                            <button id="flag">📌 FLAG <kbd>shift</kbd></button>
                         </td>
                     </tr>
                     <tr height="0">
-                        <td colspan="3">
+                        <td colspan="0">
+                        </td>
+                        <td colspan="0">
                             <input type="text" id="currUrl" size="100" style="width:100%;">
+                        </td>
+                        <td colspan="0">
+                            <button id="openExt">⏏ POPUP <kbd>tab</kbd></button>
+                            <button id="go" style="display:none">GO ➽ <kbd>enter</kbd></button>
                         </td>
                     </tr>
                     
@@ -140,6 +157,7 @@
     var metaArray;
     
     window.onload = function(){
+        i=-1;
         urlsArray = localStorage.urlCheckerUrls ? JSON.parse(localStorage.urlCheckerUrls) : defUrls;
         metaArray = localStorage.urlCheckerMetaArray ? JSON.parse(localStorage.urlCheckerMetaArray) : urlsArray.map(function(){return 0;});
         
@@ -195,10 +213,17 @@
         
         function nextPopup(){
             if(i<urlsArray.length-1){
-                s.innerHTML = "Popup "+(i+1)+" / "+(urlsArray.length)+"";
+                i++;
                 
-                setUrl(i);
-                var popup = openPopup(urlsArray[++i], function(){
+                select.value=i;
+                select.focus();
+                
+                s.innerHTML = "Popup "+(i)+" / "+(urlsArray.length)+"";
+                
+                // setUrl(i);
+                frame.src="about:blank";
+                
+                var popup = openPopup(urlsArray[i], function(){
                     if(afterFlag.checked){
                         var r = confirm("Flag this URL (❌=CANCEL / ✅=OK)")
                         metaArray[i] = r===true?1:-1;
@@ -378,10 +403,10 @@
     function btns() {
         prev.disabled = !(i>0);
         next.disabled = i < urlsArray.length - 1 ? false : true;
-        openExt.disabled = urlsArray.length < 1;
-        currUrl.disabled = urlsArray.length < 1;
-        flag.disabled = urlsArray.length < 1;
-        exportFlags.disabled = urlsArray.length < 1;
+        openExt.disabled = urlsArray.length < 1 || i<0;
+        currUrl.disabled = urlsArray.length < 1 || i<0;
+        flag.disabled = urlsArray.length < 1 || i<0;
+        exportFlags.disabled = urlsArray.length < 1 || i<0;
         
         if(urlsArray.length===0){
             currUrl.value = "No URL";
