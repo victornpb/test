@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>⛓ URLs checker</title>
+    <title>⛓ URLs checker 📌</title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex, nofollow">
@@ -9,15 +9,23 @@
     <style type="text/css">
         html,body{
             /*color: white;*/
-            background: silver;
+            background: #ececec;
             height: 100%;
             width: 100%;
             margin: 0px;
+            font-family: sans-serif;
         }
     iframe {
         width: 100%;
         height: 100%;
         background: white;
+    }
+    label{
+        font-size: 9pt;
+    }
+    iframe:after{
+        display: block;
+        content: "IF THE PAGE STAYS BLANK PRESS TAB";
     }
     .col-10,
     .col-20,
@@ -60,9 +68,10 @@
                 <table style="width: 100%; height: 100%;">
                     <tr height="0">
                         <td colspan="3">
-                            URLS: <button id="loadUrls">📥 LOAD</button>
-                            <button id="openAll" data-normal="OPEN ALL IN TABS 🗂" data-other="🚫 STOP OPENING TABS!">OPEN ALL IN TABS 🗂</button>
+                            <button id="loadUrls">📥 LOAD</button> <button id="clearUrls">✖️ CLEAR</button>
+                            <button id="openAll" data-normal="OPEN IN TABS 🗂" data-other="🚫 STOP OPENING TABS!">USE TABS 🗂</button>
                             
+                            <label><input id="afterFlag" type="checkbox">Flag on tab close</label>
                         </td>
                     </tr>
                     
@@ -80,9 +89,12 @@
                     <tr height="0">
                         <td colspan="3" class="center">
                             <div id="s">Click load</div>
+                            
                             <button id="prev">⬅️ PREV</button>
                             <button id="next">NEXT ➡️</button>
-                            <br><br>
+                            <br>
+                            <button id="flag">📌 FLAG (shift)</button>
+                            <button id="exportFlags">📋 EXPORT FLAGS</button>
                         </td>
                     </tr>
                     
@@ -105,7 +117,10 @@
                     </tr>
                 </table>
             </td>
-            <td>
+            <td style="position: relative; background: white;">
+                <div style="position: absolute; z-index: -1;">
+                    If the page doesn't load press TAB
+                </div>
                 <iframe id="frame"></iframe>
             </td>
         </tr>
@@ -113,20 +128,40 @@
     
     
     <script type='text/javascript'>
-    //<![CDATA[
+    var defUrls = [
+        "http://vitim.us",
+        "http://oldblog.vitim.us",
+        "http://vitim.com.br",
+        "http://www.instructables.com/member/Vitim/",
+    ];
 
-    var i = -1;
-    var urlsArray = [];
+    var i;
+    var urlsArray;
+    var metaArray;
+    
+    window.onload = function(){
+        urlsArray = localStorage.urlCheckerUrls ? JSON.parse(localStorage.urlCheckerUrls) : defUrls;
+        metaArray = localStorage.urlCheckerMetaArray ? JSON.parse(localStorage.urlCheckerMetaArray) : urlsArray.map(function(){return 0;});
+        
+        urls.value = urlsArray.join('\n');   
+        
+        s.innerHTML = "Loaded "+urlsArray.length+" urls!";
+        currUrl.value = 'Click NEXT';
+        console.log('loaded');
+        
+        poppulateSelect(select, urlsArray.map(function(url,i){ return getUrlWithFlag(i); }));
 
-    btns();
+        btns();
+    };
     
     
-    document.body.onkeydown=function(e){
-        console.log(e.keyCode);
+    document.body.onkeydown = function(e){
+        console.log('keydown', e);
         var ARROW_RIGHT = 39;
         var ARROW_LEFT = 37;
         var TAB = 9;
         var ENTER = 13;
+        var SHIFT = 16;
         
         if(e.keyCode===ARROW_RIGHT){
             e.preventDefault();
@@ -144,6 +179,11 @@
             e.preventDefault();
             go.click();
         }
+        
+        if(e.keyCode===SHIFT){
+            e.preventDefault();
+            flag.click();
+        }
     };
     
     var popupSequence = false;
@@ -155,16 +195,22 @@
         
         function nextPopup(){
             if(i<urlsArray.length-1){
-                s.innerHTML = `Popup ${i+1} / ${urlsArray.length}`;
+                s.innerHTML = "Popup "+(i+1)+" / "+(urlsArray.length)+"";
                 
                 setUrl(i);
                 var popup = openPopup(urlsArray[++i], function(){
+                    if(afterFlag.checked){
+                        var r = confirm("Flag this URL (❌=CANCEL / ✅=OK)")
+                        metaArray[i] = r===true?1:-1;
+                        select.item(i).innerHTML = getUrlWithFlag(i);
+                        localStorage.urlCheckerMetaArray = JSON.stringify(metaArray);
+                    }
                     if(popupSequence) nextPopup();
                 });
             }
             else{
                 popupSequence = false;
-                alert("FINISHED!"+ ` Popup ${i+1} / ${urlsArray.length}`);
+                alert("FINISHED!"+ " Popup "+(i+1)+" / "+(urlsArray.length)+"");
                 openAll.innerHTML = openAll.getAttribute('data-normal');
             }
         }
@@ -214,23 +260,78 @@
         return popup;
     }
     
+    urls.onkeydown = function(e){
+        e.stopPropagation();
+    };
+    
+    clearUrls.onclick = function(e){
+        delete localStorage.urlCheckerUrls;
+        delete localStorage.urlCheckerMetaArray;
+        
+        urlsArray = [];
+        metaArray = [];
+        urls.value = "";
+        s.innerHTML = "-/-";
+        select.innerHTML = "";
+        
+        btns();
+        urls.focus();
+    };
+    
+    
+    function getUrlWithFlag(i){
+        var metaSymbols = {
+            '-1':"❌",
+            '0':"➖",
+            '1':"✅",
+        };
+        return metaSymbols[+metaArray[i]]+" "+urlsArray[i];
+    }
+    
+    flag.onclick = function(){
+        metaArray[i] = metaArray[i]==0?1:metaArray[i]==1?-1:0; //cycle -1,0,1
+        
+        select.item(i).innerHTML = getUrlWithFlag(i);
+        localStorage.urlCheckerMetaArray = JSON.stringify(metaArray);
+    }
+    
+    exportFlags.onclick = function(){
+        prompt("Flags", urlsArray.map(function(url,i){
+            var f = metaArray[i];
+            return i+"="+f;
+        }));
+    }
     
     loadUrls.onclick = function() {
         i = -1;
-        urls.value = urls.value.trim();
-        urlsArray = urls.value.split(/\n/);
-        s.innerHTML = `Loaded ${urlsArray.length} urls!`;
+        
+        metaArray = [];
+        
+        urlsArray = [];
+        urls.value.split(/\n/).forEach(function(line){
+            line = line.trim();
+            if(line.match(/^https?:\/\/.+/)){
+                urlsArray.push(line);
+                metaArray.push(0);
+            }
+        });
+        
+        s.innerHTML = "Loaded "+urlsArray.length+" urls!";
         currUrl.value = 'Click NEXT';
         console.log('loaded');
         
-        poppulateSelect(select, urlsArray);
+        poppulateSelect(select, urlsArray.map(function(url,i){ return getUrlWithFlag(i); }));
 
         btns();
+        
+        localStorage.urlCheckerUrls = JSON.stringify(urlsArray);
+        localStorage.urlCheckerMetaArray = JSON.stringify(metaArray);
     };
     
     select.onchange = function(){
         i = parseInt(select.value);
         setUrl(i);
+        btns();
     };
     
     go.onclick = function(){
@@ -259,20 +360,28 @@
         window.open(urlsArray[i]);
     };
 
+    var t;
     function setUrl(i) {
-        currUrl.value = urlsArray[i];
-        frame.src = urlsArray[i];
+        frame.src = "about:blank";
+        clearTimeout(t);
+        
+        t = setTimeout(function(){
+            currUrl.value = urlsArray[i];
+            frame.src = urlsArray[i];
 
-        s.innerHTML = `${i+1} / ${urlsArray.length}`;
-        select.value = i;
-        select.focus();
+            s.innerHTML = ""+(i+1)+" / "+(urlsArray.length)+"";
+            select.value = i;
+            select.focus();
+        },10);
     }
 
     function btns() {
-        prev.disabled = i < 1;
+        prev.disabled = !(i>0);
         next.disabled = i < urlsArray.length - 1 ? false : true;
         openExt.disabled = urlsArray.length < 1;
         currUrl.disabled = urlsArray.length < 1;
+        flag.disabled = urlsArray.length < 1;
+        exportFlags.disabled = urlsArray.length < 1;
         
         if(urlsArray.length===0){
             currUrl.value = "No URL";
