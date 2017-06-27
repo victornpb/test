@@ -80,16 +80,23 @@
                 <table style="width: 100%; height: 100%;">
                     <tr height="0">
                         <td colspan="3">
-                            <button id="loadUrls">📥 LOAD</button> <button id="clearUrls">✖️ CLEAR</button>
+                            <span style="font-weight: bold; font-size:10pt;">URL CHECKER - 1.3 <a href="http://www.vitim.us/" style="font-size:8pt;float:right;">vitim.us</a></span>
+                        </td>
+                    </tr>
+                    <tr height="0">
+                        <td colspan="3">
+                            <button id="loadUrls">📥 LOAD</button> <button id="clearUrls">✖️ EMPTY</button>
+                            |
                             <button id="openAll" data-normal="OPEN IN TABS 🗂" data-other="✋ STOP OPENING TABS!">OPEN IN TABS 🗂</button>
-                            
-                            <label><input id="afterFlag" type="checkbox">Flag on tab close</label>
+                            <label title="Ask to 📌 Flag each tab after closing it"><input id="afterFlag" type="checkbox">📌 Auto</label>
+                            |
+                            <button id="exportFlags" title="Export a the list of URLs with the flags">📋 EXCEL</button>
                         </td>
                     </tr>
                     
                     <tr height="0">
                         <td colspan="3">
-                            <textarea id="urls" id="" cols="100" rows="6" style="width:100%;" placeholder="One URL per line">
+                            <textarea id="urls" id="" cols="100" rows="4" style="width:100%;" placeholder="Insert one URL per line">
                                 http://vitim.us
                                 http://oldblog.vitim.us
                                 http://vitim.com.br
@@ -111,7 +118,6 @@
                     
                     <tr height="0">
                         <td class="center" colspan="3">
-                            <button id="exportFlags">📋 EXPORT FLAGS</button>
                             <button id="flag">📌 FLAG <kbd>shift</kbd></button>
                         </td>
                     </tr>
@@ -323,14 +329,16 @@
         urls.focus();
     };
     
-    
-    function getUrlWithFlag(i){
+    function flagSymbol(x){
         var metaSymbols = {
             '-1':"❌",
             '0':"➖",
             '1':"✅",
         };
-        return metaSymbols[+metaArray[i]]+" "+urlsArray[i];
+        return metaSymbols[x];
+    }
+    function getUrlWithFlag(i){
+        return flagSymbol(metaArray[i])+" "+urlsArray[i];
     }
     
     flag.onclick = function(){
@@ -341,10 +349,67 @@
     }
     
     exportFlags.onclick = function(){
-        prompt("Flags", urlsArray.map(function(url,i){
+        
+        var rows = urlsArray.map(function(url,i){
             var f = metaArray[i];
-            return i+"="+f;
-        }));
+            return (`
+                <tr>
+                    <td>${i}</td>
+                    <td>${urlsArray[i]}</td>
+                    <td title="Numeric Flag">${metaArray[i]}</td>
+                    <td title="Flag"><small>${flagSymbol(metaArray[i])||""}</small></td>
+                </tr>
+            `);
+        });
+        
+        var html = `
+        <html><head>
+        <title>Export Flags</title>
+        <style>body{font-family: sans-serif; font-size: 9pt; } table{border-collapse: collapse; font-size: 10pt;} samp{display:inline-block;width:1px;height:1px;overflow:hidden;}</style>
+        </head>
+        <body>
+        <button onclick="copyTable()">📋 COPY & CLOSE</button>
+        <i>You can paste it to Excel / Sheets</i>
+        <hr>
+        <table border="1" width="100%">
+            <thead>
+                <th title="Index">N</th>
+                <th>URL</th>
+                <th title="Flag (Numeric)">F<samp><br>(X=-1/NA=0/OK=1)</samp></th>
+                <th title="Flag (Emoji)">🚩️</th>
+            </thead>
+            <tbody>
+                ${rows.join('\n')}
+            </tbody>
+        </table>
+        </body>
+        </html>
+        <script>
+        function copyTable(){
+            copy(document.getElementsByTagName("table")[0]);
+            document.body.style.background = "#ffffaa";
+            document.body.style.textAlign = "center";
+            document.body.innerHTML = "<h1>📋 COPIED!</h1> <h3>You can paste it to Excel or GoogleSheets</h3> <br><br><i>🔥 This window will close...</i>";
+            setTimeout(function(){
+                window.close();
+            },1500);
+        }
+        function copy(elm){
+          var aux = document.createElement("div");
+          aux.setAttribute("contentEditable", true);
+          aux.innerHTML = elm.outerHTML;
+          aux.setAttribute("onfocus", "document.execCommand('selectAll',false,null)"); 
+          document.body.appendChild(aux);
+          aux.focus();
+          document.execCommand("copy");
+          document.body.removeChild(aux);
+        }
+        ${'</'+'script>'}
+        `;
+        
+        var w = window.open('', '_blank', 'width=600,height=600,resizeable,scrollbars');
+        w.document.write(html);
+        w.document.close(); // needed for chrome and safari
     }
     
     loadUrls.onclick = function() {
@@ -439,7 +504,9 @@
     function poppulateSelect(select, options){
         select.innerHTML = "";
         options.forEach(function(opt, i){
-            select.appendChild(new Option(opt, i));
+            var option = new Option(opt, i);
+            option.title = opt;
+            select.appendChild(option);
         });
     }
     </script>
