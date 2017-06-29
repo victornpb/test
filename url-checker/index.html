@@ -144,7 +144,7 @@
                 <div style="position: absolute; z-index: -1;">
                     If the page doesn't load press TAB
                 </div>
-                <iframe id="frame"></iframe>
+                <iframe id="frame" src="frame.html"></iframe>
             </td>
         </tr>
     </table>
@@ -257,12 +257,14 @@
                         localStorage.urlCheckerMetaArray = JSON.stringify(metaArray);
                     }
                     if(popupSequence) nextPopup();
+                    btns();
                 });
             }
             else{
                 popupSequence = false;
                 alert("FINISHED!"+ " Popup "+(i+1)+" / "+(urlsArray.length)+"");
                 openAll.innerHTML = openAll.getAttribute('data-normal');
+                btns();
             }
         }
 
@@ -324,6 +326,8 @@
         urls.value = "";
         s.innerHTML = "-/-";
         select.innerHTML = "";
+
+        frame.src="frame.html";
         
         btns();
         urls.focus();
