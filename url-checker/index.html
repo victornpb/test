@@ -136,7 +136,7 @@
                 <div style="position: absolute; z-index: -1;">
                     If the page doesn't load press TAB
                 </div>
-                <iframe id="frame" src="frame.html"></iframe>
+                <iframe id="myframe"></iframe>
             </td>
         </tr>
     </table>
@@ -161,7 +161,12 @@
     var urlsArray;
     var metaArray;
     
+    
+    var myframe;
+    
     window.onload = function(){
+        
+        myframe = document.getElementById('myframe');
         
         var sharedUrls = param.getArray('urls');
         
@@ -244,7 +249,7 @@
                 s.innerHTML = "Popup "+(i)+" / "+(urlsArray.length)+"";
                 
                 // setUrl(i);
-                frame.src="about:blank";
+                myframe.setAttribute('src',"about:blank");
                 
                 var popup = openPopup(urlsArray[i], function(){
                     if(afterFlag.checked){
@@ -325,7 +330,7 @@
         s.innerHTML = "-/-";
         select.innerHTML = "";
 
-        frame.src="frame.html";
+        myframe.setAttribute('set',Aribute('src',"frame.html"));
         
         btns();
         urls.focus();
@@ -456,7 +461,7 @@
     };
     
     go.onclick = function(){
-        frame.src = currUrl.value;
+        myframe.setAttribute('src', currUrl.value);
 
         s.innerHTML = "New URL";
         currUrl.focus();
@@ -483,17 +488,17 @@
 
     var t;
     function setUrl(i) {
-        frame.src = "about:blank";
+        myframe.setAttribute('src', "about:blank");
         clearTimeout(t);
-        
         t = setTimeout(function(){
             currUrl.value = urlsArray[i];
-            frame.src = urlsArray[i];
-
+            myframe.setAttribute('src', urlsArray[i]);
+            
             s.innerHTML = ""+(i+1)+" / "+(urlsArray.length)+"";
             select.value = i;
             select.focus();
-        },10);
+        }, 1);
+        
     }
 
     function btns() {
