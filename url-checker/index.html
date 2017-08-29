@@ -444,7 +444,7 @@
         
         param.clear();
         param.set('pos', 0);
-        param.setArray('meta', urlsArray.map(u=>0));
+        param.setArray('meta', urlsArray.map(function(){return 0;}));
         param.setArray('urls', urlsArray);
         setUrl(0);
     };
