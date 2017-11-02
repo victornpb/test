@@ -1,0 +1,291 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Image to base 64</title>
+<style type="text/css">
+
+body{
+	font-family: Helvetica, Arial, sans-serif;
+	background-color:#E6E6E6;
+}
+
+#results{
+	text-align:center;
+}
+
+.barra{
+	width: 770px;	
+	padding: 5px;
+	margin-top: 10px;
+	background-color: silver;
+	border-radius: 2px;
+	
+	font:10pt Arial, Helvetica, sans-serif blue;
+	
+	-moz-box-shadow:0px 3px 6px rgba(0,0,0,0.5);
+	-webkit-box-shadow:0px 3px 6px rgba(0,0,0,0.5);
+	box-shadow:0px 3px 6px rgba(0,0,0,0.5);
+}
+
+.barra table{
+	width: 100%;
+	border: 0px none transparent;
+	margin: 0px;
+	padding: 0px;
+}
+
+.barra .prev{
+	width: 250px;
+	min-height: 60px;
+	text-align:center;
+	vertical-align:middle;	
+}
+
+.barra .code{
+}
+
+.barra .prevDesc{
+	text-align:center;
+}
+
+.barra .codeDesc{
+	text-align:left;
+}
+
+.barra img{
+	max-width: 250px;
+}
+
+.barra textarea{
+	width: 100%;
+	height: 100%;
+}
+
+.base64{
+	display:block;	
+	
+	width: 500px;
+	height: 250px; 
+	
+	padding: 2px;
+	border: 1px inset gray;
+	background-color: white;
+	
+	font-family:"Lucida Console", Monaco, monospace, "Courier New";
+	font-size: 8pt;
+
+	overflow:scroll;
+	word-wrap:break-word;
+}
+
+#drop {
+	display: none;
+	height: 80px;
+	
+	-moz-box-shadow: inset 0px 6px 8px #000000;
+	-webkit-box-shadow: inset 0px 6px 8px #000000;
+	box-shadow: inset 0px 6px 8px #000000;
+	border-style: inset;
+	border-width: 1px;
+	border-radius: 8px;
+	background-color: rgba(0,0,0,0.5);
+}
+
+.centerText{
+	text-align:center;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Image to base64 converter</h1>
+
+<form>
+	<div>
+        Images: 
+        	<input type='file' accept="image/*" onChange="readfile(this)" multiple/>
+        <div id="fileDetails"></div>
+		<br>
+		<div id="drop"> or Drop Files here </div>
+	</div>
+</form>
+
+<hr>
+<div class="centerText"> Base 64 </div>
+<div id="results"></div>
+<hr>
+<a href="http://www.vitim.us">www.vitim.us</a>
+
+<script type="text/javascript">
+
+var results=document.getElementById('results');
+
+function readfile(input){
+	if(window.File && window.FileList && input.files.length>0){
+		readFile( getFilesArray(input) );	
+	}
+}
+
+
+function getFilesArray(input){
+	var array=[];
+	for(var i=0;i<input.files.length;i++){
+		array[i]=input.files[i];	
+	}
+	return array;
+}
+
+
+
+function readFile(files){
+	
+	if(files.length>0){
+	
+		var file=files.pop();
+		
+		var reader = new FileReader();
+		reader.onload = function(e){
+			
+			var data=e.target.result;
+			
+			var a=[];
+		
+			a[0]=newElement('div','',{className:'barra'},'');
+			a[1]=newElement('table','',{},'',a[0]);
+			a[2]=newElement('tr','',{},'',a[1]);
+			a[3]=newElement('tr','',{},'',a[1]);
+			
+			a[4]=newElement('td','',{className:'prev'},'',a[2]);
+			a[5]=newElement('td','',{className:'code'},'',a[2]);
+			a[6]=newElement('td','',{className:'prevDesc'},'',a[3]);
+			a[7]=newElement('td','',{className:'codeDesc'},'',a[3]);
+			
+			a[8]=newElement('img','',{alt:"Preview", src:data},'',a[4]);
+			a[9]=newElement('div','',{className:'base64'},'',a[5]);
+			
+			a[9].innerText=data;
+			a[9].onclick=selectText;
+			
+			a[8].onload=function(){
+				a[6].innerText=file.name+"\n"+ a[8].naturalWidth+"x"+a[8].naturalHeight +"\n"+file.type+" \n Size: "+scaleBytes(file.size); 
+				a[7].innerText="Size: "+scaleBytes(data.length)+"  ("+parseFloat(((data.length/file.size*100)-100).toFixed(2))+"% Larger)";
+				a[7].innerText+="\n Download: "+secondsToTime((data.length*8)/(56*1000))+" @ 56Kbps  ";
+				
+				readFile(files);
+			}
+			
+			//document.getElementById('results').appendChild(a[0]);
+			results.insertBefore(a[0], results.firstChild);
+		}
+		
+		reader.readAsDataURL(file);	
+	}
+}
+
+function newElement(tag,id,attributes,textNode,parent){
+	var element;
+	element=document.createElement(tag);
+	if(id!='' && id!==undefined){element.id=id;}
+	if(typeof attributes==='object'){
+		for(var attName in attributes){
+			var attValue=attributes[attName];
+			if(attName.toLowerCase()=='style'){	element.style.cssText=attValue;	}
+			else if(attName.toLowerCase()=='class' || attName.toLowerCase()=='classname'){ element.className=attValue; }
+			else{ element.setAttribute(attName, attValue); }
+		}
+	}
+	if(typeof textNode!=='undefined' && textNode!==''){ element.innerHTML=(typeof textNode=='object')?(textNode.outerHTML):(textNode);	}
+	if(parent!==undefined){ parent.appendChild(element); }
+	return element;
+}
+
+
+function getBase64Image(base64){
+	
+	var image = document.createElement("img");
+	image.setAttribute("src", base64);
+	
+	var obj={
+		element: image,
+		base64: data,
+		width: image.naturalWidth,	
+		height: image.naturalHeight,
+		bytes: data.length,
+		mime: data.substring(5,data.indexOf(';'))
+	};
+	
+	return obj;
+}
+
+
+
+
+function scaleBytes(bytes){
+	var sufix, x=parseFloat(bytes);
+	
+	if(x>=1000000000000){ x=x/1000000000000; sufix=" TB";}
+	else if(x>=1000000000){ x=x/1000000000; sufix=" GB";}
+	else if(x>=1000000){ x=x/1000000; sufix=" MB";}
+	else if(x>=1000){ x=x/1000; sufix=" KB";}
+	else { sufix=" bytes";}
+	
+	return parseFloat(x.toFixed(1)) + sufix;
+}
+
+function secondsToTime(secs){
+	
+    var h = Math.floor(secs/(60*60));
+    var m = Math.floor((secs %(60*60))/60);
+    var s = Math.ceil((secs %(60*60))%60);
+
+	if(h>1){h+="hours";}
+	else if(h>0){h+="hour";}
+	else{h="";}
+
+	if(m>1){m+="minutes";}
+	else if(m>0){m+="minute";}
+	else{m="";}
+
+	if(s>1){s+="seconds";}
+	else if(s>0){s+="second";}
+	else{s="";}
+	
+	if(h && !m && !s) return h;
+	else if(!h && m && !s) return m;
+	else if(!h && !m && s) return s;
+	else if(h && m && !s) return h +' and '+ m;
+	else if(!h && m && s) return m +' and '+ s;
+	else if(h && !m && s) return h +' and '+ s;
+	else if(h && m && s) return h +', '+ m +' and '+ s;
+}
+
+
+function selectText() {
+	if (document.selection) {
+	var range = document.body.createTextRange();
+		range.moveToElementText(this);
+	range.select();
+	}
+	else if (window.getSelection) {
+	var range = document.createRange();
+	range.selectNode(this);
+	window.getSelection().addRange(range);
+	}
+}
+
+function selectAll(e){
+        e.target.select();
+        // Work around Chrome's little problem
+        e.target.onmouseup = function(e) {
+            // Prevent further mouseup intervention
+            e.target.onmouseup = null;
+            return false;
+        };
+}
+
+</script>
+</body>
+</html>
