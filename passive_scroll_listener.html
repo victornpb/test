@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style id="compiled-css" type="text/css">
-      progress {
-  position: fixed;
+progress {
+  -position: fixed;
   top: 0px;
   left: 0px;
   width: 100%;
@@ -14,7 +14,23 @@
 
 body{
   height: 9000px;
+  background-color: black;
   background: url('https://i.imgur.com/qwrtnxz.jpg');
+  color: white;
+  
+}
+
+#filler{
+  border: 2px dashed cyan;
+  margin-top: 3000px;
+  height: 3000px;
+}
+
+#sticky{
+  position: sticky;
+  top: 10px;
+  border: 2px solid red;
+  height: 90vh;
 }
   </style>
 
@@ -51,11 +67,16 @@ function doSomething(y){
 
 </head>
 <body>
-    <progress id="progress" value="0" max="1"></progress>
 
 <h1>
 Scroll down
 </h1>
+
+<div id="filler">
+  <div id="sticky">
+    <progress id="progress" value="0" max="1"></progress>
+  </div>
+</div>
 
 
 </body>
