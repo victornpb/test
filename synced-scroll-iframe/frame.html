@@ -8,9 +8,10 @@
     <title>Document</title>
     <style>
         body{
-            color: orangered;
-            height: 3000px;
+            color: black;
+            height: 9000px;
             background: url('./1_10.png');
+            text-align: center;
         }
     </style>
 </head>
@@ -18,9 +19,66 @@
 <body>
     <h1>I'm in a FREAKING IFRAME!</h1>
 
-    <div style="position: fixed; top: 90px;">
+    <div style="position: fixed; top: 90px; background: orange; color: black;">
         I'm fixed inside an iframe
+        <progress max="1"></progress>
     </div>
+
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+    <p>Lorem ipsum</p>
+
+
     <script>
         /*!
          * 
@@ -31,15 +89,19 @@
 
         window.addEventListener('load', function () {
 
+            var progress = document.querySelector('progress')
+
             console.log('iframe onload');
 
             document.addEventListener('scroll', function (e) {
-                console.log('frame scroll', e);
+                // console.log('frame scroll', e);
 
                 window.parent.postMessage(JSON.stringify({
                     type: "scrolled"
                 }), '*');
                 //TODO: send different messages, when: scrolling, hit the top, hit the bottom.
+
+                progress.value = window.scrollY / document.body.offsetHeight;
 
             }, {
                 passive: true
@@ -52,7 +114,7 @@
 
         function receiveMessage(e) {
             // if (e.origin !== "http://example.org:8080") return;
-            console.log('iframe received msg', event);
+            // console.log('iframe received msg', event);
             if (e.data && e.data.indexOf('{') === 0) { // simple test for json to avoid try/catch
                 // parsing json may in fact be too slow on slower devices, maybe implement a lighter wight payload
                 var obj = JSON.parse(e.data);

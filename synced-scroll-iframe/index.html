@@ -18,7 +18,7 @@
         }
 
         body {
-            height: 9000px;
+            height: 18000px;
             background-color: black;
             background: url('./dungeon_pattern_repeating_black.jpg');
             color: white;
@@ -27,26 +27,40 @@
 
         #filler {
             position: relative;
-            border: 2px dashed cyan;
+            color: magenta;
+            border: 4px dashed magenta;
             margin-top: 3000px;
-            height: 3000px;
+            height: 9000px;
+            background: rgba(255,0,255,0.1)
+        }
+        #filler::before{
+            content: "Filler";
         }
 
         #sticky {
             position: sticky;
             position: -webkit-sticky;
             top: 10px;
-            border: 2px solid red;
+            border: 4px dashed cyan;
+            color: cyan;
             height: 90vh;
             padding: 30px;
+        }
+        #sticky::before{
+            content:"Sticky";
         }
 
         iframe{
             /* margin: 30px; */
+            height: 100%;
+            width: 100%;
         }
     </style>
 
     <script type="text/javascript">
+
+        var vsync = false;
+
         window.onload = function () {
 
             var iframe = document.querySelector('iframe');
@@ -56,6 +70,8 @@
 
             window.addEventListener('scroll', function (e) {
                 last_known_scroll_position = window.scrollY;
+                
+                if(!vsync) doSomething(last_known_scroll_position);
 
                 if (!ticking) {
                     window.requestAnimationFrame(function () {
@@ -70,7 +86,7 @@
             });
 
             function doSomething(y) {
-                progress.value = y / document.body.offsetHeight;
+                progress.value = window.scrollY / document.body.offsetHeight;
 
                 iframe.contentWindow.postMessage(JSON.stringify({
                     type:"scrollTo",
@@ -94,6 +110,7 @@
 
     <div id="filler">
         <div id="sticky">
+            <input type="checkbox" oninput="vsync=this.checked"> vsync
             <progress id="progress" value="0" max="1"></progress>
             <iframe src="frame.html" height="100%" width="100%" scrolling="no" frameborder="0"></iframe>
         </div>
