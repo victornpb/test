@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        body{
+            color: orangered;
+            height: 3000px;
+            background: url('./1_10.png');
+        }
+    </style>
+</head>
+
+<body>
+    <h1>I'm in a FREAKING IFRAME!</h1>
+
+    <div style="position: fixed; top: 90px;">
+        I'm fixed inside an iframe
+    </div>
+    <script>
+        /*!
+         * 
+         * 
+         * @author Victor B. wwww.victorborges.com
+         * @date   2019-05-03
+         */
+
+        window.addEventListener('load', function () {
+
+            console.log('iframe onload');
+
+            document.addEventListener('scroll', function (e) {
+                console.log('frame scroll', e);
+
+                window.parent.postMessage(JSON.stringify({
+                    type: "scrolled"
+                }), '*');
+                //TODO: send different messages, when: scrolling, hit the top, hit the bottom.
+
+            }, {
+                passive: true
+            });
+
+        });
+
+
+        window.addEventListener("message", receiveMessage, false);
+
+        function receiveMessage(e) {
+            // if (e.origin !== "http://example.org:8080") return;
+            console.log('iframe received msg', event);
+            if (e.data && e.data.indexOf('{') === 0) { // simple test for json to avoid try/catch
+                // parsing json may in fact be too slow on slower devices, maybe implement a lighter wight payload
+                var obj = JSON.parse(e.data);
+
+                if (obj.type === 'scrollTo') {
+                    window.scrollTo(window.screenX, obj.y);
+                }
+            }
+
+        }
+    </script>
+</body>
+
+</html>

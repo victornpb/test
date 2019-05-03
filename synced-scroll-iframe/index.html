@@ -1,0 +1,105 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title></title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style id="compiled-css" type="text/css">
+    *{
+        box-sizing: border-box;
+    }
+        progress {
+            -position: fixed;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+        }
+
+        body {
+            height: 9000px;
+            background-color: black;
+            background: url('./dungeon_pattern_repeating_black.jpg');
+            color: white;
+
+        }
+
+        #filler {
+            position: relative;
+            border: 2px dashed cyan;
+            margin-top: 3000px;
+            height: 3000px;
+        }
+
+        #sticky {
+            position: sticky;
+            position: -webkit-sticky;
+            top: 10px;
+            border: 2px solid red;
+            height: 90vh;
+            padding: 30px;
+        }
+
+        iframe{
+            /* margin: 30px; */
+        }
+    </style>
+
+    <script type="text/javascript">
+        window.onload = function () {
+
+            var iframe = document.querySelector('iframe');
+
+            let last_known_scroll_position = 0;
+            let ticking = false;
+
+            window.addEventListener('scroll', function (e) {
+                last_known_scroll_position = window.scrollY;
+
+                if (!ticking) {
+                    window.requestAnimationFrame(function () {
+                        doSomething(last_known_scroll_position);
+                        ticking = false;
+                    });
+
+                    ticking = true;
+                }
+            }, {
+                passive: true,
+            });
+
+            function doSomething(y) {
+                progress.value = y / document.body.offsetHeight;
+
+                iframe.contentWindow.postMessage(JSON.stringify({
+                    type:"scrollTo",
+                    y: y-3000,
+                }), '*');
+                //TODO: send different messages, when: scrolling, hit the top, hit the bottom.
+
+
+            }
+
+        }
+    </script>
+
+</head>
+
+<body>
+
+    <h1>
+        Scroll down
+    </h1>
+
+    <div id="filler">
+        <div id="sticky">
+            <progress id="progress" value="0" max="1"></progress>
+            <iframe src="frame.html" height="100%" width="100%" scrolling="no" frameborder="0"></iframe>
+        </div>
+    </div>
+
+
+</body>
+
+</html>
