@@ -1,0 +1,62 @@
+<html><head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title></title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style id="compiled-css" type="text/css">
+      progress {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+}
+
+body{
+  height: 9000px;
+  background: url('https://i.imgur.com/qwrtnxz.jpg');
+}
+  </style>
+
+  <script type="text/javascript">
+
+
+    window.onload=function(){
+      
+let last_known_scroll_position = 0;
+let ticking = false;
+
+window.addEventListener('scroll', function(e) {
+  last_known_scroll_position = window.scrollY;
+
+  if (!ticking) {
+    window.requestAnimationFrame(function() {
+      doSomething(last_known_scroll_position);
+      ticking = false;
+    });
+
+    ticking = true;
+  }
+}, {
+	passive:true,
+});
+
+function doSomething(y){
+	progress.value = y / document.body.clientHeight;
+}
+
+    }
+
+</script>
+
+</head>
+<body>
+    <progress id="progress" value="0" max="1"></progress>
+
+<h1>
+Scroll down
+</h1>
+
+
+</body>
+</html>
