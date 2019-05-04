@@ -11,18 +11,18 @@
         box-sizing: border-box;
     }
         progress {
-            -position: fixed;
-            top: 0px;
+            position: fixed;
+            bottom: 10px;
             left: 0px;
             width: 100%;
         }
 
         body {
-            height: 18000px;
-            background-color: black;
-            background: url('./dungeon_pattern_repeating_black.jpg');
+            height: 9000px;
+            background-color: #64c172;
+            background: url('./science_green.png');
             color: white;
-
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         #filler {
@@ -30,36 +30,38 @@
             color: magenta;
             border: 4px dashed magenta;
             margin-top: 3000px;
-            height: 9000px;
-            background: rgba(255,0,255,0.1)
+            height: 4000px;
+            /* background: rgba(255,0,255,0.1) */
         }
         #filler::before{
+            position: absolute;
             content: "Filler";
         }
 
         #sticky {
             position: sticky;
             position: -webkit-sticky;
-            top: 10px;
-            border: 4px dashed cyan;
-            color: cyan;
+            top: 5vh;
+            border: 4px dashed white;
+            color: white;
             height: 90vh;
-            padding: 30px;
+            padding: 10px;
         }
         #sticky::before{
+            position:absolute;
             content:"Sticky";
         }
 
         iframe{
             /* margin: 30px; */
-            height: 100%;
+            height: 90%;
             width: 100%;
         }
     </style>
 
     <script type="text/javascript">
 
-        var vsync = false;
+        var vsync = true;
 
         window.onload = function () {
 
@@ -86,7 +88,8 @@
             });
 
             function doSomething(y) {
-                progress.value = window.scrollY / document.body.offsetHeight;
+                var viewportHeight = window.innerHeight;
+                progress.value = window.scrollY / (document.body.offsetHeight-viewportHeight);
 
                 iframe.contentWindow.postMessage(JSON.stringify({
                     type:"scrollTo",
@@ -110,12 +113,12 @@
 
     <div id="filler">
         <div id="sticky">
-            <input type="checkbox" oninput="vsync=this.checked"> vsync
-            <progress id="progress" value="0" max="1"></progress>
             <iframe src="frame.html" height="100%" width="100%" scrolling="no" frameborder="0"></iframe>
+            <label><input type="checkbox" onchange="vsync=this.checked" checked> VSync</label>
         </div>
     </div>
-
+    
+    <progress id="progress" value="0" max="1"></progress>
 
 </body>
 
