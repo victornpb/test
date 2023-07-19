@@ -3,7 +3,7 @@
 // @namespace   github.com/victornpb
 // @match       https://app.hyperate.io/*
 // @grant       none
-// @version     1.1
+// @version     1.0
 // @author      github.com/Victornpb
 // ==/UserScript==
 
@@ -284,10 +284,10 @@ class VirtualHeart {
         }
 
         this.ctx.save();
-        this.ctx.strokeStyle = "#9cff00";
+        this.ctx.strokeStyle = "#9c2200";
         this.ctx.lineWidth = 1;
         this.ctx.shadowBlur = 3;
-        this.ctx.shadowColor = "#9cc1bb";
+        this.ctx.shadowColor = "#993300";
 
         this.ctx.beginPath();
         this.ctx.moveTo(this.paddingH, mapRange(this.buffer2[0], 0, 250, maxH, this.paddingV));
@@ -313,8 +313,8 @@ class VirtualHeart {
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.drawGrayLines();
-        this.drawPulse();
         this.drawLog();
+        this.drawPulse();
         this.animateIcon();
 
         window.requestAnimationFrame(this.render); // next frame
@@ -332,7 +332,7 @@ class VirtualHeart {
       lastLog = 0;
       log() {
         const now = Date.now();
-        if (now > this.lastLog + 1000) {
+        if (now > this.lastLog + 200) {
           this.lastLog = now;
           // history line
           const bpm = this.heart.getBpm(); // get the bpm number
