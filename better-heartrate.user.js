@@ -122,7 +122,7 @@
             <div class="simulated">
               Simulate
               <input id="simulated" type="checkbox">
-              <input id="slider" type="range" min="30" max="250" value="90">
+              <input id="slider" type="number" min="30" max="250" value="90">
             </div>
           </div>
 
@@ -168,8 +168,8 @@ class VirtualHeart {
       }
 
       setBpm(bpm) {
-        this.#waveDuration = (60 / bpm) * 1000;
         this.#bpm = bpm;
+        this.#waveDuration = (60 / bpm) * 1000;
       }
 
       readSignal() {
@@ -186,7 +186,7 @@ class VirtualHeart {
       constructor() {
         this.canvas = document.getElementById("heartbeat");
         this.ctx = this.canvas.getContext("2d");
-        this.paddingH = 5;
+        this.paddingH = 30;
         this.paddingV = 2;
         this.blurredCircleRadius = 3;
         this.pulseWidth = Math.round(0.8 * (this.canvas.width - this.paddingH * 2));
@@ -207,38 +207,54 @@ class VirtualHeart {
       }
 
       drawGrayLines() {
-        const h = (this.canvas.height - this.paddingV);
-        const w = 6;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const ph = this.paddingH;
+        const pv = this.paddingV;
+        const ml = -1;
+        const mr = 30;
+
+        const bh = (h - this.paddingV);
+        const bw = 6;
 
         this.ctx.save();
         this.ctx.strokeStyle = "#7e90a6";
         this.ctx.lineWidth = 1;
 
+         // left bracket
         this.ctx.beginPath();
-        this.ctx.moveTo(this.canvas.width - this.paddingH - 0, this.paddingV + 0);
-        this.ctx.lineTo(this.canvas.width - this.paddingH - w, this.paddingV + 0);
+        this.ctx.moveTo(ml + ph + 0, pv + 0);
+        this.ctx.lineTo(ml + ph + bw, pv + 0);
         this.ctx.stroke();
         this.ctx.beginPath();
-        this.ctx.moveTo(this.canvas.width - this.paddingH + 0, this.paddingV + 0);
-        this.ctx.lineTo(this.canvas.width - this.paddingH + 0, this.paddingV + h);
+        this.ctx.moveTo(ml + ph + 0, pv + 0);
+        this.ctx.lineTo(ml + ph + 0, pv + bh);
         this.ctx.stroke();
         this.ctx.beginPath();
-        this.ctx.moveTo(this.canvas.width - this.paddingH, this.paddingV + h);
-        this.ctx.lineTo(this.canvas.width - this.paddingH - w, this.paddingV + h);
+        this.ctx.moveTo(ml + ph + 0, pv + bh);
+        this.ctx.lineTo(ml + ph + bw, pv + bh);
         this.ctx.stroke();
 
+        // right bracket
         this.ctx.beginPath();
-        this.ctx.moveTo(this.paddingH + 0, this.paddingV + 0);
-        this.ctx.lineTo(this.paddingH + w, this.paddingV + 0);
+        this.ctx.moveTo(w - ph - 0 - mr, pv + 0);
+        this.ctx.lineTo(w - ph - bw - mr, pv + 0);
         this.ctx.stroke();
         this.ctx.beginPath();
-        this.ctx.moveTo(this.paddingH + 0, this.paddingV + 0);
-        this.ctx.lineTo(this.paddingH + 0, this.paddingV + h);
+        this.ctx.moveTo(w - ph + 0 - mr, pv + 0);
+        this.ctx.lineTo(w - ph + 0 - mr, pv + bh);
         this.ctx.stroke();
         this.ctx.beginPath();
-        this.ctx.moveTo(this.paddingH + 0, this.paddingV + h);
-        this.ctx.lineTo(this.paddingH + w, this.paddingV + h);
+        this.ctx.moveTo(w - ph - mr, pv + bh);
+        this.ctx.lineTo(w - ph - bw - mr, pv + bh);
         this.ctx.stroke();
+
+        // Draw Y-axis labels
+        this.ctx.fillStyle = "#7e90a6";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText("250", 0, pv + 12);
+        this.ctx.fillText("  0", 0, h + pv - 5);
+
 
         this.ctx.restore();
       }
@@ -276,6 +292,13 @@ class VirtualHeart {
       }
 
       drawLog() {
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const ph = this.paddingH;
+        const pv = this.paddingV;
+        const ml = -1;
+        const mr = 25;
+
         const maxH = this.canvas.height - this.paddingV * 2;
         const middleH = maxH / 2;
 
@@ -284,18 +307,53 @@ class VirtualHeart {
         }
 
         this.ctx.save();
-        this.ctx.strokeStyle = "#9c2200";
         this.ctx.lineWidth = 1;
-        this.ctx.shadowBlur = 3;
-        this.ctx.shadowColor = "#993300";
 
+        // min line
+        const yMin = mapRange(this.min, 0, 250, h-pv, pv);
+        this.ctx.strokeStyle = "#0088FF88";
+        this.ctx.beginPath();
+        this.ctx.moveTo(ph+ml, yMin);
+        this.ctx.lineTo(w-ph-mr, yMin);
+        this.ctx.stroke();
+        this.ctx.fillStyle = "#0088FF";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText(`${this.min | 0} min`, w-ph-mr, yMin + 12);
+
+        // avg line
+        const yAvg = mapRange(this.avg, 0, 250, h-pv, pv);
+        this.ctx.strokeStyle = "#88888888";
+        this.ctx.beginPath();
+        this.ctx.moveTo(ph+ml, yAvg);
+        this.ctx.lineTo(w-ph-mr, yAvg);
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = "#888";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText(`${this.avg | 0} avg`, w-ph-mr, yAvg + 0);
+
+        // max line
+        const yMax = mapRange(this.max, 0, 250, h-pv, pv);
+        this.ctx.strokeStyle = "#FF008888";
+        this.ctx.beginPath();
+        this.ctx.moveTo(ph+ml, yMax);
+        this.ctx.lineTo(w-ph-mr, yMax);
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = "#FF0088";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText(`${this.max | 0} max`, w-ph-mr, yMax - 12);
+
+        // current line
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = "#f11";
         this.ctx.beginPath();
         this.ctx.moveTo(this.paddingH, mapRange(this.buffer2[0], 0, 250, maxH, this.paddingV));
         for (let x = 1; x < this.buffer2.length; x++) {
           this.ctx.lineTo(this.paddingH + x, mapRange(this.buffer2[x], 0, 250, maxH, 0));
         }
-
         this.ctx.stroke();
+
         this.ctx.restore();
       }
 
@@ -329,17 +387,27 @@ class VirtualHeart {
         }
       }
 
-      lastLog = 0;
+
+      max = 0;
+      min = 0;
+      avg = 0;
+
+      #lastLog = 0;
       log() {
         const now = Date.now();
-        if (now > this.lastLog + 200) {
-          this.lastLog = now;
+        if (now > this.#lastLog + 500) {
+          this.#lastLog = now;
           // history line
           const bpm = this.heart.getBpm(); // get the bpm number
           this.buffer2.push(bpm);
           if (this.buffer2.length > this.pulseWidth) {
             this.buffer2.shift(); // scroll
           }
+
+          // statistics
+          if (bpm > this.max) this.max = bpm;
+          if (this.min === 0 || bpm < this.min) this.min = bpm;
+          this.avg = (this.avg + bpm) / 2;
         }
       }
 
@@ -349,28 +417,16 @@ class VirtualHeart {
     }
 
 
-
-    let max = 0;
-    let min = 0;
-    let avg = 0;
     function updateUI(bpm, timestamp) {
       console.log(bpm);
+
+      virtualHeart.setBpm(bpm);
 
       const heartRateElement = document.getElementById('heartRate');
       heartRateElement.innerText = `${bpm} BPM`;
 
       const lastUpdateElement = document.getElementById('lastUpdate');
-      lastUpdateElement.innerText = timestamp;
-
-      virtualHeart.setBpm(bpm);
-
-      if (bpm>max) max = bpm;
-      if (bpm>0 && bpm < min) min = bpm;
-
-      avg += bpm;
-      avg /= 2;
-
-      lastUpdateElement.innerText = `Min: ${min}bpm Max: ${max}bpm Average: ${parseInt(avg)}bpm`;
+      lastUpdateElement.innerText = `Min: ${ecgMonitor.min}bpm Max: ${ecgMonitor.max}bpm Average: ${parseInt(ecgMonitor.avg)}bpm`;
 
     }
 
@@ -379,12 +435,11 @@ class VirtualHeart {
 
     function fetchHeatRate() {
 
-
           let bpm = parseInt(document.querySelector('.heartrate').innerText);
           let timestamp = '';
 
           if (simulated.checked) {
-            bpm = slider.value;
+            bpm = parseInt(slider.value);
             timestamp = new Date();
           }
 
@@ -393,15 +448,16 @@ class VirtualHeart {
           setTimeout(fetchHeatRate, pollingInterval);
     }
 
-    let virtualHeart;
-  let ecgMonitor;
+    window.virtualHeart = null;
+    window.ecgMonitor = null;
 
     function init(){
-       virtualHeart = new VirtualHeart();
-       ecgMonitor = new ECGMonitor();
+      virtualHeart = new VirtualHeart();
+      ecgMonitor = new ECGMonitor();
       ecgMonitor.attachHeart(virtualHeart);
       fetchHeatRate();
     }
     setTimeout(init, 3000);
+
 
 })();
