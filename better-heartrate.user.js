@@ -3,7 +3,7 @@
 // @namespace   github.com/victornpb
 // @match       https://app.hyperate.io/*
 // @grant       none
-// @version     1.0
+// @version     1.1
 // @author      github.com/Victornpb
 // ==/UserScript==
 
@@ -134,9 +134,8 @@
 
 
 
-
-  // Simulate a real beating heart
-    class VirtualHeart {
+class VirtualHeart {
+      #bpm = 90;
       #value = 0;
       #currentIndex = 0;
       #lastTick = 0;
@@ -170,10 +169,15 @@
 
       setBpm(bpm) {
         this.#waveDuration = (60 / bpm) * 1000;
+        this.#bpm = bpm;
       }
 
       readSignal() {
         return this.#value;
+      }
+
+      getBpm() {
+        return this.#bpm;
       }
     }
 
@@ -187,6 +191,7 @@
         this.blurredCircleRadius = 3;
         this.pulseWidth = Math.round(0.8 * (this.canvas.width - this.paddingH * 2));
         this.buffer = [0];
+        this.buffer2 = [0]
 
 
         this.gradient = this.ctx.createRadialGradient(this.blurredCircleRadius, this.blurredCircleRadius, 0, this.blurredCircleRadius, this.blurredCircleRadius, this.blurredCircleRadius);
@@ -248,9 +253,9 @@
         this.ctx.shadowBlur = 3;
         this.ctx.shadowColor = "#9cc1bb";
 
+
         this.ctx.beginPath();
         this.ctx.moveTo(this.paddingH, this.paddingV + middleH + this.buffer[0] * middleH);
-
         for (let x = 1; x < this.buffer.length; x++) {
           this.ctx.lineTo(this.paddingH + x, this.paddingV + middleH - this.buffer[x] * middleH);
         }
@@ -270,6 +275,30 @@
         this.ctx.restore();
       }
 
+      drawLog() {
+        const maxH = this.canvas.height - this.paddingV * 2;
+        const middleH = maxH / 2;
+
+        function mapRange(x, in_min, in_max, out_min, out_max) {
+            return ((x - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
+        }
+
+        this.ctx.save();
+        this.ctx.strokeStyle = "#9cff00";
+        this.ctx.lineWidth = 1;
+        this.ctx.shadowBlur = 3;
+        this.ctx.shadowColor = "#9cc1bb";
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.paddingH, mapRange(this.buffer2[0], 0, 250, maxH, this.paddingV));
+        for (let x = 1; x < this.buffer2.length; x++) {
+          this.ctx.lineTo(this.paddingH + x, mapRange(this.buffer2[x], 0, 250, maxH, 0));
+        }
+
+        this.ctx.stroke();
+        this.ctx.restore();
+      }
+
       animateIcon() {
         if (!this.heart) return;
         const lastPoint = this.buffer[this.buffer.length - 1];
@@ -279,23 +308,38 @@
       render() {
         if (this.heart) {
           this.measure();
+          this.log();
         }
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.drawGrayLines();
         this.drawPulse();
+        this.drawLog();
         this.animateIcon();
 
         window.requestAnimationFrame(this.render); // next frame
       }
 
       measure() {
+        // waveform
         const value = this.heart.readSignal(); // sample the heart
         this.buffer.push(value);
-
-        // scroll
         if (this.buffer.length > this.pulseWidth) {
-          this.buffer.shift();
+          this.buffer.shift(); // scroll
+        }
+      }
+
+      lastLog = 0;
+      log() {
+        const now = Date.now();
+        if (now > this.lastLog + 1000) {
+          this.lastLog = now;
+          // history line
+          const bpm = this.heart.getBpm(); // get the bpm number
+          this.buffer2.push(bpm);
+          if (this.buffer2.length > this.pulseWidth) {
+            this.buffer2.shift(); // scroll
+          }
         }
       }
 
@@ -305,6 +349,10 @@
     }
 
 
+
+    let max = 0;
+    let min = 0;
+    let avg = 0;
     function updateUI(bpm, timestamp) {
       console.log(bpm);
 
@@ -315,10 +363,19 @@
       lastUpdateElement.innerText = timestamp;
 
       virtualHeart.setBpm(bpm);
+
+      if (bpm>max) max = bpm;
+      if (bpm>0 && bpm < min) min = bpm;
+
+      avg += bpm;
+      avg /= 2;
+
+      lastUpdateElement.innerText = `Min: ${min}bpm Max: ${max}bpm Average: ${parseInt(avg)}bpm`;
+
     }
 
 
-    const pollingInterval = 1000; // fetch data every few seconds
+    const pollingInterval = 500; // fetch data every few seconds
 
     function fetchHeatRate() {
 
