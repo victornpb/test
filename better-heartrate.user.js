@@ -348,8 +348,8 @@ class VirtualHeart {
 
         // current line
         this.ctx.lineWidth = 2;
-        this.ctx.strokeStyle = "#f11";
-        this.ctx.shadowBlur = 3;
+        this.ctx.strokeStyle = "#f22";
+        this.ctx.shadowBlur = 2;
         this.ctx.shadowColor = "#ffffff";
         this.ctx.beginPath();
         this.ctx.moveTo(this.paddingH, mapRange(this.buffer2[0], 0, 250, maxH, this.paddingV));
@@ -397,8 +397,9 @@ class VirtualHeart {
 
       #lastLog = 0;
       log() {
+        const logInterval = 50;
         const now = Date.now();
-        if (now > this.#lastLog + 500) {
+        if (now > this.#lastLog + logInterval) {
           this.#lastLog = now;
           // history line
           const bpm = this.heart.getBpm(); // get the bpm number
