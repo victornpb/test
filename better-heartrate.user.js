@@ -3,7 +3,7 @@
 // @namespace   github.com/victornpb
 // @match       https://app.hyperate.io/*
 // @grant       none
-// @version     1.0
+// @version     1.2
 // @author      github.com/Victornpb
 // ==/UserScript==
 
@@ -13,31 +13,30 @@
     // Add the CSS styles to the head of the document
     const styleElement = document.createElement('style');
     styleElement.innerHTML = `
-        #myheartrate{
-          position: absolute;
-          top: 0px;
-          bottom: 0px;
-          left: 0px;
-          right: 0px;
+    #myheartrate{
+      position: absolute;
+      top: 0px;
+      bottom: 0px;
+      left: 0px;
+      right: 0px;
 
-          font-family: Arial, sans-serif;
-          text-align: center;
-          background-color: #222;
-          color: #fff;
-          margin: 0;
-          padding: 20px;
-    }
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #111;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
 
-    h1 {
-      margin-top: 40px;
-      color: #eee;
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      flex-direction: column;
     }
 
     #heartContainer {
-      margin-top: 40px;
       position: relative;
       width: 100%;
-      height: 100px;
+      height: 150px;
       text-align: center;
     }
 
@@ -45,9 +44,9 @@
       position: absolute;
       top: 0;
       left: 50%;
-      margin-left: -50px;
-      width: 100px;
-      height: 100px;
+      margin-left: -75px;
+      width: 150px;
+      height: 150px;
       fill: red;
       opacity: 0.8;
       /* animation: heartbeat 1s infinite; */
@@ -84,7 +83,7 @@
 
     #lastUpdate {
       font-size: 16px;
-      margin-top: 10px;
+      margin-top: 32px;
       color: #666;
     }
 
@@ -104,20 +103,23 @@
     div.innerHTML = `
 
         <div id="myheartrate">
-          <h1>Heart Rate Monitor</h1>
-            <div id="heartContainer">
-              <svg id="heart" viewBox="0 0 512 512">
-                <path d="M464.1,64.4c-49.3-47.9-128.9-47.9-178.1,0L256,81.7L225.9,64.4c-49.3-47.9-128.9-47.9-178.1,0
-                c-55.1,53.7-54.7,141.4,1.8,194.8l200.7,194.8c4.7,4.6,10.7,6.9,16.7,6.9s12-2.3,16.7-6.9l200.7-194.8
-                C518.8,205.8,519.4,118.1,464.1,64.4z" />
-              </svg>
+            <div>
+                <div id="heartContainer">
+                  <svg id="heart" viewBox="0 0 512 512">
+                    <path d="M464.1,64.4c-49.3-47.9-128.9-47.9-178.1,0L256,81.7L225.9,64.4c-49.3-47.9-128.9-47.9-178.1,0
+                    c-55.1,53.7-54.7,141.4,1.8,194.8l200.7,194.8c4.7,4.6,10.7,6.9,16.7,6.9s12-2.3,16.7-6.9l200.7-194.8
+                    C518.8,205.8,519.4,118.1,464.1,64.4z" />
+                  </svg>
+                </div>
+
+                <div id="heartRate">Loading...</div>
+             </div>
+
+            <div>
+              <canvas width="800" height="200" id="heartbeat"></canvas>
+
+              <div id="lastUpdate">Last Update: -</div>
             </div>
-
-            <div id="heartRate">Loading...</div>
-
-            <canvas width="500" height="100" id="heartbeat"></canvas>
-
-            <div id="lastUpdate">Last Update: -</div>
 
             <div class="simulated">
               Simulate
@@ -191,7 +193,7 @@ class VirtualHeart {
         this.blurredCircleRadius = 3;
         this.pulseWidth = Math.round(0.8 * (this.canvas.width - this.paddingH * 2));
         this.buffer = [0];
-        this.buffer2 = [0]
+        this.buffer2 = [0];
 
 
         this.gradient = this.ctx.createRadialGradient(this.blurredCircleRadius, this.blurredCircleRadius, 0, this.blurredCircleRadius, this.blurredCircleRadius, this.blurredCircleRadius);
@@ -347,6 +349,8 @@ class VirtualHeart {
         // current line
         this.ctx.lineWidth = 2;
         this.ctx.strokeStyle = "#f11";
+        this.ctx.shadowBlur = 3;
+        this.ctx.shadowColor = "#ffffff";
         this.ctx.beginPath();
         this.ctx.moveTo(this.paddingH, mapRange(this.buffer2[0], 0, 250, maxH, this.paddingV));
         for (let x = 1; x < this.buffer2.length; x++) {
@@ -375,7 +379,7 @@ class VirtualHeart {
         this.drawPulse();
         this.animateIcon();
 
-        window.requestAnimationFrame(this.render); // next frame
+        window.setTimeout(this.render, 1000 / 60); // next frame
       }
 
       measure() {
@@ -386,7 +390,6 @@ class VirtualHeart {
           this.buffer.shift(); // scroll
         }
       }
-
 
       max = 0;
       min = 0;
