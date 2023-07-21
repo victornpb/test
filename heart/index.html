@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <title>❤️ ECG Heart Monitor</title>
   <style>
@@ -369,18 +368,18 @@
         this.ctx.fillText(`${this.max | 0} max`, cx2 + 5, yMax + tb - 12);
 
         // current line
-        // this.ctx.lineWidth = 2;
-        // this.ctx.strokeStyle = "#f22";
-        // this.ctx.shadowBlur = 2;
-        // this.ctx.shadowColor = "#ffffff";
-        // this.ctx.beginPath();
-        // this.ctx.moveTo(cx1, mapRange(this.buffer2[0], 0, 250, cy2, cy1));
-        // for (let i = 1; i < this.buffer2.length; i++) {
-        //   const x = mapRange(i, 0, this.buffer2.length, cx1, cx2);
-        //   const y = mapRange(this.buffer2[i], 0, 250, cy2, cy1);
-        //   this.ctx.lineTo(x, y);
-        // }
-        // this.ctx.stroke();
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = "#f22";
+        this.ctx.shadowBlur = 2;
+        this.ctx.shadowColor = "#ffffff";
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx1, mapRange(this.buffer2[0], 0, 250, cy2, cy1));
+        for (let i = 1; i < this.buffer2.length; i++) {
+          const x = mapRange(i, 0, this.buffer2.length, cx1, cx2);
+          const y = mapRange(this.buffer2[i], 0, 250, cy2, cy1);
+          this.ctx.lineTo(x, y);
+        }
+        this.ctx.stroke();
 
         this.ctx.restore();
       }
@@ -617,4 +616,5 @@
 
   </script>
 </body>
+
 </html>
