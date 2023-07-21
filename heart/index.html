@@ -34,7 +34,7 @@
 
     #heartContainer {
       position: relative;
-      width: 100 %;
+      width: 100%;
       height: 150px;
       text-align: center;
     }
@@ -42,36 +42,13 @@
     #heart {
       position: absolute;
       top: 0;
-      left: 50 %;
+      left: 50%;
       margin-left: -75px;
       width: 150px;
       height: 150px;
       fill: red;
-      opacity: 0.8;
-      /* animation: heartbeat 1s infinite; */
+      opacity: 1;
       will-change: transform;
-    }
-
-    @keyframes heartbeat {
-      0 % {
-        transform: scale(1);
-      }
-
-      15 % {
-        transform: scale(0.85);
-      }
-
-      30 % {
-        transform: scale(1);
-      }
-
-      35 % {
-        transform: scale(1.05);
-      }
-
-      40 % {
-        transform: scale(1);
-      }
     }
 
     #heartRate {
@@ -80,15 +57,22 @@
       color: #aaa;
     }
 
-    #lastUpdate {
+    #status {
       font-size: 16px;
       margin-top: 32px;
       color: #666;
     }
 
-    .simulated {
+    #stats {
+      font-size: 16px;
+      margin-top: 32px;
+      color: #666;
+    }
+
+    .footer {
+      width: 100%;
       position: absolute;
-      bottom: 10px;
+      bottom: 5px;
     }
 
     .error {
@@ -98,7 +82,6 @@
     span.stat {
       margin: 0 1em;
     }
-
 
     label {
       margin-right: 2px;
@@ -115,6 +98,14 @@
       background: transparent;
       color: white;
     }
+
+    #timestamp {
+      float: right;
+      width: 50px;
+      color: grey;
+      font-size: 9pt;
+      padding-right: 1em;
+    }
   </style>
 </head>
 
@@ -130,15 +121,16 @@
       </div>
 
       <div id="heartRate"> Loading...</div>
+      <div id="status"></div>
     </div>
 
     <div>
       <canvas width="800" height="200" id="heartbeat"> </canvas>
 
-      <div id="lastUpdate"> --</div>
+      <div id="stats"> --</div>
     </div>
 
-    <div class="simulated">
+    <div class="footer">
 
       <label title="Use real data">
         <input name="mode" type="radio" value="real" checked>
@@ -152,8 +144,12 @@
 
       <label title="Enter a manual value">
         <input name="mode" type="radio" value="manual">
-        <input id="slider" type="number" min="30" max="250" value="90">
+        <input id="slider" type="number" min="0" max="250" step="1" value="90">
       </label>
+
+      <div id="timestamp">
+        --
+      </div>
 
     </div>
   </div>
@@ -211,7 +207,6 @@
       }
     }
 
-
     class ECGMonitor {
       constructor() {
         console.log(`[ECGMonitor] Started!`);
@@ -233,19 +228,33 @@
         this.drawPulse = this.drawPulse.bind(this);
         this.render = this.render.bind(this);
 
+        // paddings
+        this.pt = 20;
+        this.pb = 20;
+        this.pl = 25;
+        this.pr = 50;
+
+        // canvas size
+        this.w = this.canvas.width;
+        this.h = this.canvas.height;
+
+        // chart size
+        this.cw = this.w - this.pl - this.pr;
+        this.ch = this.h - this.pt - this.pb;
+        this.cx1 = this.pl;
+        this.cx2 = this.pl + this.cw;
+        this.cy1 = this.pt;
+        this.cy2 = this.pt + this.ch;
+
         this.render();
       }
 
       drawGrayLines() {
-        const w = this.canvas.width;
-        const h = this.canvas.height;
-        const ph = this.paddingH;
-        const pv = this.paddingV;
-        const ml = -1;
-        const mr = 30;
+        const { w, h, pt, pb, pl, pr, cw, ch, cx1, cx2, cy1, cy2 } = this;
 
-        const bh = (h - this.paddingV);
-        const bw = 6;
+        const s = 6;
+        const ml = -2;
+        const mr = -2;
 
         this.ctx.save();
         this.ctx.strokeStyle = "#7e90a6";
@@ -253,44 +262,43 @@
 
         // left bracket
         this.ctx.beginPath();
-        this.ctx.moveTo(ml + ph + 0, pv + 0);
-        this.ctx.lineTo(ml + ph + bw, pv + 0);
+        this.ctx.moveTo(cx1 + ml, cy1);
+        this.ctx.lineTo(cx1 + ml + s, cy1);
         this.ctx.stroke();
         this.ctx.beginPath();
-        this.ctx.moveTo(ml + ph + 0, pv + 0);
-        this.ctx.lineTo(ml + ph + 0, pv + bh);
+        this.ctx.moveTo(cx1 + ml, cy1);
+        this.ctx.lineTo(cx1 + ml, cy2);
         this.ctx.stroke();
         this.ctx.beginPath();
-        this.ctx.moveTo(ml + ph + 0, pv + bh);
-        this.ctx.lineTo(ml + ph + bw, pv + bh);
+        this.ctx.moveTo(cx1 + ml, cy2);
+        this.ctx.lineTo(cx1 + ml + s, cy2);
         this.ctx.stroke();
 
         // right bracket
         this.ctx.beginPath();
-        this.ctx.moveTo(w - ph - 0 - mr, pv + 0);
-        this.ctx.lineTo(w - ph - bw - mr, pv + 0);
+        this.ctx.moveTo(cx2 - mr, cy1);
+        this.ctx.lineTo(cx2 - mr - s, cy1);
         this.ctx.stroke();
         this.ctx.beginPath();
-        this.ctx.moveTo(w - ph + 0 - mr, pv + 0);
-        this.ctx.lineTo(w - ph + 0 - mr, pv + bh);
+        this.ctx.moveTo(cx2 - mr, cy1);
+        this.ctx.lineTo(cx2 - mr, cy2);
         this.ctx.stroke();
         this.ctx.beginPath();
-        this.ctx.moveTo(w - ph - mr, pv + bh);
-        this.ctx.lineTo(w - ph - bw - mr, pv + bh);
+        this.ctx.moveTo(cx2 - mr, cy2);
+        this.ctx.lineTo(cx2 - mr - s, cy2);
         this.ctx.stroke();
 
         // Draw Y-axis labels
         this.ctx.fillStyle = "#7e90a6";
         this.ctx.font = "12px Arial";
-        this.ctx.fillText("250", 0, pv + 12);
-        this.ctx.fillText("  0", 0, h + pv - 5);
+        this.ctx.fillText("250", 0, cy1 + 12);
+        this.ctx.fillText("  0", 0, cy2 - 5);
 
         this.ctx.restore();
       }
 
       drawPulse() {
-        const maxH = this.canvas.height - this.paddingV * 2;
-        const middleH = maxH / 2;
+        const { w, h, pt, pb, pl, pr, cw, ch, cx1, cx2, cy1, cy2 } = this;
 
         this.ctx.save();
         this.ctx.strokeStyle = "#9cc1bb";
@@ -298,13 +306,11 @@
         this.ctx.shadowBlur = 3;
         this.ctx.shadowColor = "#9cc1bb";
 
-
         this.ctx.beginPath();
-        this.ctx.moveTo(this.paddingH, this.paddingV + middleH + this.buffer[0] * middleH);
+        this.ctx.moveTo(cx1, mapRange(this.buffer[0], -1, 1, cy1, cy2));
         for (let x = 1; x < this.buffer.length; x++) {
-          this.ctx.lineTo(this.paddingH + x, this.paddingV + middleH - this.buffer[x] * middleH);
+          this.ctx.lineTo(cx1 + x, mapRange(this.buffer[x], -1, 1, cy2, cy1));
         }
-
         this.ctx.stroke();
         this.ctx.restore();
 
@@ -312,8 +318,8 @@
 
         this.ctx.save();
         this.ctx.translate(
-          this.paddingH + this.buffer.length - 1 - this.blurredCircleRadius,
-          this.paddingV + middleH - lastPoint * middleH - this.blurredCircleRadius
+          cx1 + this.buffer.length - 1 - this.blurredCircleRadius,
+          mapRange(lastPoint, -1, 1, cy2, cy1) - this.blurredCircleRadius
         );
         this.ctx.fillStyle = this.gradient;
         this.ctx.fillRect(0, 0, this.blurredCircleRadius * 2, this.blurredCircleRadius * 2);
@@ -321,65 +327,60 @@
       }
 
       drawLog() {
-        const w = this.canvas.width;
-        const h = this.canvas.height;
-        const ph = this.paddingH;
-        const pv = this.paddingV;
-        const ml = -1;
-        const mr = 25;
-
-        const maxH = this.canvas.height - this.paddingV * 2;
-        const middleH = maxH / 2;
+        const { w, h, pt, pb, pl, pr, cw, ch, cx1, cx2, cy1, cy2 } = this;
+        const tb = 3; // text baseline
 
         this.ctx.save();
         this.ctx.lineWidth = 1;
 
         // min line
-        const yMin = mapRange(this.min, 0, 250, h - pv, pv);
+        const yMin = mapRange(this.min, 0, 250, cy2, cy1);
         this.ctx.strokeStyle = "#0088FF88";
         this.ctx.beginPath();
-        this.ctx.moveTo(ph + ml, yMin);
-        this.ctx.lineTo(w - ph - mr, yMin);
+        this.ctx.moveTo(cx1, yMin);
+        this.ctx.lineTo(cx2, yMin);
         this.ctx.stroke();
         this.ctx.fillStyle = "#0088FF";
         this.ctx.font = "12px Arial";
-        this.ctx.fillText(`${this.min | 0} min`, w - ph - mr, yMin + 12);
+        this.ctx.fillText(`${this.min | 0} min`, cx2 + 5, yMin + tb + 12);
 
         // avg line
-        const yAvg = mapRange(this.avg, 0, 250, h - pv, pv);
+        const yAvg = mapRange(this.avg, 0, 250, cy2, cy1);
         this.ctx.strokeStyle = "#88888888";
         this.ctx.beginPath();
-        this.ctx.moveTo(ph + ml, yAvg);
-        this.ctx.lineTo(w - ph - mr, yAvg);
+        this.ctx.moveTo(cx1, yAvg);
+        this.ctx.lineTo(cx2, yAvg);
         this.ctx.stroke();
 
         this.ctx.fillStyle = "#888";
         this.ctx.font = "12px Arial";
-        this.ctx.fillText(`${this.avg | 0} avg`, w - ph - mr, yAvg + 0);
+        this.ctx.fillText(`${this.avg | 0} avg`, cx2 + 5, yAvg + tb + 0);
 
         // max line
-        const yMax = mapRange(this.max, 0, 250, h - pv, pv);
+        const yMax = mapRange(this.max, 0, 250, cy2, cy1);
         this.ctx.strokeStyle = "#FF008888";
         this.ctx.beginPath();
-        this.ctx.moveTo(ph + ml, yMax);
-        this.ctx.lineTo(w - ph - mr, yMax);
+        this.ctx.moveTo(cx1, yMax);
+        this.ctx.lineTo(cx2, yMax);
         this.ctx.stroke();
 
         this.ctx.fillStyle = "#FF0088";
         this.ctx.font = "12px Arial";
-        this.ctx.fillText(`${this.max | 0} max`, w - ph - mr, yMax - 12);
+        this.ctx.fillText(`${this.max | 0} max`, cx2 + 5, yMax + tb - 12);
 
         // current line
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeStyle = "#f22";
-        this.ctx.shadowBlur = 2;
-        this.ctx.shadowColor = "#ffffff";
-        this.ctx.beginPath();
-        this.ctx.moveTo(this.paddingH, mapRange(this.buffer2[0], 0, 250, maxH, this.paddingV));
-        for (let x = 1; x < this.buffer2.length; x++) {
-          this.ctx.lineTo(this.paddingH + x, mapRange(this.buffer2[x], 0, 250, maxH, 0));
-        }
-        this.ctx.stroke();
+        // this.ctx.lineWidth = 2;
+        // this.ctx.strokeStyle = "#f22";
+        // this.ctx.shadowBlur = 2;
+        // this.ctx.shadowColor = "#ffffff";
+        // this.ctx.beginPath();
+        // this.ctx.moveTo(cx1, mapRange(this.buffer2[0], 0, 250, cy2, cy1));
+        // for (let i = 1; i < this.buffer2.length; i++) {
+        //   const x = mapRange(i, 0, this.buffer2.length, cx1, cx2);
+        //   const y = mapRange(this.buffer2[i], 0, 250, cy2, cy1);
+        //   this.ctx.lineTo(x, y);
+        // }
+        // this.ctx.stroke();
 
         this.ctx.restore();
       }
@@ -398,8 +399,8 @@
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.drawGrayLines();
-        this.drawLog();
         this.drawPulse();
+        this.drawLog();
         this.animateIcon();
 
         window.setTimeout(this.render, 1000 / 60); // next frame
@@ -415,11 +416,12 @@
       }
 
       max = 0;
-      min = 0;
       avg = 0;
+      min = 0;
 
       #lastLog = 0;
       log() {
+        const maxBufferDuration = 1000 * 60 * 60 * 1;
         const logInterval = 50;
         const now = Date.now();
         if (now > this.#lastLog + logInterval) {
@@ -427,16 +429,16 @@
           // history line
           const bpm = this.heart.getBpm(); // get the bpm number
           this.buffer2.push(bpm);
-          if (this.buffer2.length > this.pulseWidth) {
+          if (this.buffer2.length > maxBufferDuration / logInterval) {
             this.buffer2.shift(); // scroll
           }
 
-          // statistics
+          // calc statistics (min, max, avg)
+          const s = 3; // Smoothing factor 0=instant 1=faster >1=slower
           if (bpm > this.max) this.max = bpm;
           if (this.min === 0 || bpm < this.min) this.min = bpm;
-
           if (this.avg === 0) this.avg = bpm;
-          this.avg = (this.avg * 0.999) + (bpm * 0.001);
+          this.avg = (this.avg * (1 - 1 / Math.pow(10, s))) + (bpm * (1 / Math.pow(10, s)));
         }
       }
 
@@ -445,40 +447,43 @@
       }
     }
 
-
-    function updateUI(bpm, timestamp) {
+    let timestamp;
+    function updateUI(bpm, _timestamp) {
       virtualHeart.setBpm(bpm);
 
       const heartRateElement = document.getElementById('heartRate');
       heartRateElement.innerText = `${bpm} BPM`;
 
-      const lastUpdateElement = document.getElementById('lastUpdate');
-      lastUpdateElement.innerHTML = `
-<span class="stat"> Min: <b>${ecgMonitor.min}</b> </span>
-<span class="stat"> Average: <b>${parseInt(ecgMonitor.avg)}</b> </span>
-<span class="stat"> Max: <b>${ecgMonitor.max}</b> </span>
-`;
+      const statsElement = document.getElementById('stats');
+      statsElement.innerHTML = `
+        <span class="stat"> Min: <b>${ecgMonitor.min}</b> </span>
+        <span class="stat"> Average: <b>${parseInt(ecgMonitor.avg)}</b> </span>
+        <span class="stat"> Max: <b>${ecgMonitor.max}</b> </span>
+      `;
+
+      timestamp = _timestamp;
     }
 
 
     const simulationInterval = 500; // fetch data every few seconds
 
     function simulated() {
-
+      const statusElement = document.getElementById('status');
       const mode = document.querySelector('[name="mode"]:checked').value;
 
       if (mode === 'manual') {
-        bpm = parseInt(slider.value);
-        timestamp = new Date();
+        let timestamp = new Date();
+        let bpm = parseInt(slider.value);
+        statusElement.innerText = `Manually set to ${bpm}`;
         updateUI(bpm, timestamp);
       }
-
-      if (mode === 'random') {
-        let x = parseInt(slider.value);
-        x += 3 * (Math.random() - 0.5);
-        slider.value = clamp(x, 0, 250);
-        bpm = Math.round(x);
-        timestamp = new Date();
+      else if (mode === 'random') {
+        let timestamp = new Date();
+        let bpm = parseInt(slider.value);
+        bpm += mapRange(randomNormal(), -1, 1, -10, 10);
+        bpm = Math.round(clamp(bpm, 0, 250));
+        slider.value = bpm;
+        statusElement.innerText = 'Simulated';
         updateUI(bpm, timestamp);
       }
 
@@ -493,7 +498,8 @@
 
       const id = location.search.substring(1);
       const heartRateElement = document.getElementById('heartRate');
-      const lastUpdateElement = document.getElementById('lastUpdate');
+      const statsElement = document.getElementById('stats');
+      const statusElement = document.getElementById('status');
 
       virtualHeart = new VirtualHeart();
       ecgMonitor = new ECGMonitor();
@@ -505,7 +511,7 @@
         socket.addEventListener('open', () => {
           console.log('[WebSocket] Connection established.');
           heartRateElement.innerText = '...';
-          lastUpdateElement.innerText = 'Connection established!';
+          statusElement.innerText = 'Connection established!';
         });
 
         socket.addEventListener('message', event => {
@@ -515,6 +521,7 @@
           if (mode === 'real') {
             const timestamp = new Date();
             updateUI(event.data, timestamp);
+            statusElement.innerText = '';
           }
         });
 
@@ -523,7 +530,7 @@
           const retry = 3;
 
           heartRateElement.innerText = '--';
-          lastUpdateElement.inneHTML = `Connection closed. <br> Reconnecting in ${retry}s...`;
+          statusElement.inneHTML = `Connection closed. <br> Reconnecting in ${retry}s...`;
 
           setTimeout(connect, retry * 1000); // reconnect
         });
@@ -533,7 +540,7 @@
           const retry = 30;
 
           heartRateElement.innerText = '--';
-          lastUpdateElement.inneHTML = 'Error: ' + error + `<br> Retrying in ${retry}s...`;
+          statusElement.inneHTML = 'Error: ' + error + `<br> Retrying in ${retry}s...`;
           setTimeout(connect, retry * 1000); // reconnect
         });
       }
@@ -545,20 +552,69 @@
         document.querySelector('[name="mode"][value="random"]').checked = true;
       }
 
+      setInterval(()=> {
+        document.getElementById('timestamp').innerText = timestamp ? fromNow(timestamp) : '--';
+      }, 1000);
+
       simulated();
     }
 
     window.onload = init;
 
     // ========== helper functions ===========
+
     function clamp(x, min, max) {
-      return x < min ? min : x > max ? max : x;
+      return x < min ? min : (x > max ? max : x);
     }
+
     function mapRange(x, inMin, inMax, outMin, outMax) {
       return ((x - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
     }
 
+    function randomNormal() {
+      var u = 0, v = 0;
+      while (u === 0) u = Math.random(); // Converting [0,1) to (0,1)
+      while (v === 0) v = Math.random();
+
+      var z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+      z = z / 6; // Adjust the scale to fit between -1 and 1
+
+      return z;
+    }
+
+    /**
+     * Human readable elapsed or remaining time (example: 3 minutes ago)
+     * @param  {Date|Number|String} date A Date object, timestamp or string parsable with Date.parse()
+     * @return {string} Human readable elapsed or remaining time
+     * @author github.com/victornpb
+     */
+    function fromNow(date) {
+        const SECOND = 1000;
+        const MINUTE = 60 * SECOND;
+        const HOUR = 60 * MINUTE;
+        const DAY = 24 * HOUR;
+        const WEEK = 7 * DAY;
+        const MONTH = 30 * DAY;
+        const YEAR = 365 * DAY;
+        const intervals = [
+            { ge: 2 * HOUR, divisor: HOUR, elapsed: '#h ago', remaining: 'in #h' },
+            { ge: HOUR, divisor: HOUR, elapsed: '#h ago', remaining: 'in #h' },
+            { ge: 2 * MINUTE, divisor: MINUTE, elapsed: '#m ago', remaining: 'in #m' },
+            { ge: MINUTE, divisor: MINUTE, elapsed: '#m ago', remaining: 'in a minute' },
+            { ge: 1 * SECOND, divisor: SECOND, elapsed: '#s ago', remaining: 'in #s' },
+            { ge: 0, divisor: 1, elapsed: 'just now', remaining: 'just now' },
+        ];
+        const diff = Date.now() - (typeof date === 'object' ? date : new Date(date)).getTime();
+        const diffAbs = Math.abs(diff);
+        for (const interval of intervals) {
+            if (diffAbs >= interval.ge) {
+                const x = Math.round(Math.abs(diff) / interval.divisor);
+                const isFuture = diff < 0;
+                return String(isFuture ? interval.remaining : interval.elapsed).replace('#', x);
+            }
+        }
+    }
+
   </script>
 </body>
-
 </html>
