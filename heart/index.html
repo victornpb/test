@@ -507,10 +507,14 @@
       const connect = () => {
         socket = new WebSocket(`wss://lyall.lol:9007/${id}`);
 
+        let t;
+        let timeout = 11;
+
         socket.addEventListener('open', () => {
           console.log('[WebSocket] Connection established.');
           heartRateElement.innerText = '...';
           statusElement.innerText = 'Connection established!';
+          clearTimeout(t);
         });
 
         socket.addEventListener('message', event => {
@@ -522,6 +526,7 @@
             updateUI(event.data, timestamp);
             statusElement.innerText = '';
           }
+          clearTimeout(t);
         });
 
         socket.addEventListener('close', () => {
@@ -529,9 +534,10 @@
           const retry = 3;
 
           heartRateElement.innerText = '--';
-          statusElement.inneHTML = `Connection closed. <br> Reconnecting in ${retry}s...`;
-
+          statusElement.innerHTML = `Connection closed. <br> Reconnecting in ${retry}s...`;
+          
           setTimeout(connect, retry * 1000); // reconnect
+          setTimeout(die, timeout * 1000);
         });
 
         socket.addEventListener('error', error => {
@@ -539,9 +545,17 @@
           const retry = 30;
 
           heartRateElement.innerText = '--';
-          statusElement.inneHTML = 'Error: ' + error + `<br> Retrying in ${retry}s...`;
+          statusElement.innerHTML = 'Error: ' + error + `<br> Retrying in ${retry}s...`;
+
+          updateUI(0, new Date());
           setTimeout(connect, retry * 1000); // reconnect
+          setTimeout(die, timeout * 1000);
         });
+
+        const die = () => {
+          heartRateElement.innerText = '--';
+          updateUI(0, new Date());
+        };
       }
 
       if (id) {
