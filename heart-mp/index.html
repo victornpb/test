@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>❤️ ECG Heart Monitor</title>
+  <style>
+    body,
+    html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      height: 100%;
+    }
+
+    .item {
+      flex: 1 0 50%;
+      box-sizing: border-box;
+      border: 2px solid black;
+    }
+
+    @media only screen and (max-width: 768px) {
+      .item {
+        flex: 1 0 100%;
+      }
+    }
+
+    [name="myheartrate"] {
+      /* position: absolute;
+      top: 0px;
+      bottom: 0px;
+      width: 50%; */
+
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #111;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+
+      display: flex;
+      justify-content: space-evenly;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    [name="heartContainer"] {
+      position: relative;
+      width: 100%;
+      height: 150px;
+      text-align: center;
+    }
+
+    [name="heart"] {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      margin-left: -75px;
+      width: 150px;
+      height: 150px;
+      fill: red;
+      opacity: 1;
+      will-change: transform;
+    }
+
+    [name="heartRate"] {
+      font-size: 48px;
+      margin-top: 20px;
+      color: #aaa;
+    }
+
+    [name="status"] {
+      font-size: 16px;
+      margin-top: 32px;
+      color: #666;
+    }
+
+    [name="stats"] {
+      font-size: 16px;
+      margin-top: 32px;
+      color: #666;
+    }
+
+    .footer {
+      position: relative;
+      width: 100%;
+      bottom: 2px;
+    }
+
+    .error {
+      color: red;
+    }
+
+    span.stat {
+      margin: 0 1em;
+    }
+
+    label {
+      margin-right: 2px;
+      border: 1px solid grey;
+      border-radius: 4px;
+      display: inline-block;
+      color: grey;
+      font-size: 9pt;
+      line-height: 21px;
+      padding: 1px;
+    }
+
+    label input[type="number"] {
+      background: transparent;
+      color: white;
+    }
+
+    [name="timestamp"] {
+      float: right;
+      width: 50px;
+      color: grey;
+      font-size: 9pt;
+      padding-right: 1em;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container"></div>
+
+  <template id="template">
+    <div name="myheartrate" class="item">
+      <div>
+        <div name="heartContainer">
+          <svg name="heart" viewBox="0 0 512 512">
+            <path
+              d="M464.1,64.4c-49.3-47.9-128.9-47.9-178.1,0L256,81.7L225.9,64.4c-49.3-47.9-128.9-47.9-178.1,0 c-55.1, 53.7-54.7, 141.4, 1.8, 194.8l200.7, 194.8c4.7, 4.6, 10.7, 6.9, 16.7, 6.9s12-2.3, 16.7-6.9l200.7-194.8 C518.8, 205.8, 519.4, 118.1, 464.1, 64.4z" />
+          </svg>
+        </div>
+        <div name="heartRate"> Loading...</div>
+        <div name="status"></div>
+      </div>
+      <div>
+        <canvas width="600" height="200" name="heartbeat"> </canvas>
+        <div name="stats"> --</div>
+      </div>
+      <div class="footer">
+        <form>
+          <label title="Use real data">
+            <input name="mode" type="radio" value="real" checked>
+            Real data
+          </label>
+          <label title="Randomly change the simulated BPM">
+            <input name="mode" type="radio" value="random">
+            Random
+          </label>
+          <label title="Enter a manual value">
+            <input name="mode" type="radio" value="manual">
+            <input name="slider" type="number" min="0" max="250" step="1" value="90">
+          </label>
+        </form>
+        <div name="timestamp">
+          --
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+
+    class VirtualHeart {
+      #bpm = 0;
+      #value = 0;
+      #currentIndex = 0;
+      #lastTick = 0;
+      #waveDuration = 0;
+      #simulationRate = 100; // Hz
+
+      // hand drawn using this as reference https://www.researchgate.net/figure/Shape-of-a-healthy-ECG-heartbeat-signal_fig1_221051256
+      #waveform = [
+        -0.3899762125623386, -0.3899762125623386, -0.4003361468024722, -0.359631156951167, -0.4142596045223683,
+        -0.3121664936949514, -0.4316547423333731, -0.27930492923466876, 0.23474251705990934, 1, 0.9024806899275357,
+        0.7110055932623691, 0.12438350125366249, -0.6936104554513642, -0.9299969691681743, -1, -0.9464736730926422,
+        -0.7233677133751526, -0.33154544870087543, -0.36418658902838874, -0.24502897658912026, -0.4168312194046708,
+      ];
+
+      constructor() {
+        console.log(`[VirtualHeart] Started! Running simulation at ${this.#simulationRate}Hz`);
+        this.tick();
+      }
+
+      // simulation tick
+      tick() {
+        const tickInterval = this.#waveDuration / this.#waveform.length;
+        const now = Date.now();
+
+        if (now > this.#lastTick + tickInterval) {
+          this.#lastTick = now;
+
+          this.#value = this.#waveform[this.#currentIndex];
+          this.#currentIndex = (this.#currentIndex + 1) % this.#waveform.length;
+        }
+
+        setTimeout(() => this.tick(), 1000 / this.#simulationRate);
+      }
+
+      setBpm(bpm) {
+        console.log(`[VirtualHeart] Adjusted heart beat to ${bpm}bpm`);
+        bpm = parseInt(bpm);
+        this.#bpm = bpm;
+        this.#waveDuration = (60 / bpm) * 1000;
+      }
+
+      readSignal() {
+        return this.#bpm > 0 ? this.#value : 0;
+      }
+
+      getBpm() {
+        return this.#bpm;
+      }
+    }
+
+    class ECGMonitor {
+      heart = null;
+      constructor(container) {
+        console.log(`[ECGMonitor] Started!`);
+        this.canvas = container.querySelector('[name="heartbeat"]');
+        this.heartIcon = container.querySelector('[name="heart"]');
+        this.ctx = this.canvas.getContext("2d");
+        this.paddingH = 30;
+        this.paddingV = 2;
+        this.blurredCircleRadius = 3;
+        this.pulseWidth = Math.round((this.canvas.width - this.paddingH * 2 - 64));
+        this.buffer = [0];
+        this.buffer2 = [0];
+
+        this.gradient = this.ctx.createRadialGradient(this.blurredCircleRadius, this.blurredCircleRadius, 0, this.blurredCircleRadius, this.blurredCircleRadius, this.blurredCircleRadius);
+        this.gradient.addColorStop(0, 'rgba(255,255,255,1)');
+        this.gradient.addColorStop(0.5, 'rgba(228,255,255,.3)');
+        this.gradient.addColorStop(1, 'rgba(228,255,255,0)');
+
+        this.drawGrayLines = this.drawGrayLines.bind(this);
+        this.drawPulse = this.drawPulse.bind(this);
+        this.render = this.render.bind(this);
+
+        // paddings
+        this.pt = 20;
+        this.pb = 20;
+        this.pl = 25;
+        this.pr = 50;
+
+        // canvas size
+        this.w = this.canvas.width;
+        this.h = this.canvas.height;
+
+        // chart size
+        this.cw = this.w - this.pl - this.pr;
+        this.ch = this.h - this.pt - this.pb;
+        this.cx1 = this.pl;
+        this.cx2 = this.pl + this.cw;
+        this.cy1 = this.pt;
+        this.cy2 = this.pt + this.ch;
+
+        this.render();
+      }
+
+      drawGrayLines() {
+        const { w, h, pt, pb, pl, pr, cw, ch, cx1, cx2, cy1, cy2 } = this;
+
+        const s = 6;
+        const ml = -2;
+        const mr = -2;
+
+        this.ctx.save();
+        this.ctx.strokeStyle = "#7e90a6";
+        this.ctx.lineWidth = 1;
+
+        // left bracket
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx1 + ml, cy1);
+        this.ctx.lineTo(cx1 + ml + s, cy1);
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx1 + ml, cy1);
+        this.ctx.lineTo(cx1 + ml, cy2);
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx1 + ml, cy2);
+        this.ctx.lineTo(cx1 + ml + s, cy2);
+        this.ctx.stroke();
+
+        // right bracket
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx2 - mr, cy1);
+        this.ctx.lineTo(cx2 - mr - s, cy1);
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx2 - mr, cy1);
+        this.ctx.lineTo(cx2 - mr, cy2);
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx2 - mr, cy2);
+        this.ctx.lineTo(cx2 - mr - s, cy2);
+        this.ctx.stroke();
+
+        // Draw Y-axis labels
+        this.ctx.fillStyle = "#7e90a6";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText("250", 0, cy1 + 12);
+        this.ctx.fillText("  0", 0, cy2 - 5);
+
+        this.ctx.restore();
+      }
+
+      drawPulse() {
+        const { w, h, pt, pb, pl, pr, cw, ch, cx1, cx2, cy1, cy2 } = this;
+
+        this.ctx.save();
+        this.ctx.strokeStyle = "#9cc1bb";
+        this.ctx.lineWidth = 1;
+        this.ctx.shadowBlur = 3;
+        this.ctx.shadowColor = "#9cc1bb";
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx1, mapRange(this.buffer[0], -1, 1, cy1, cy2));
+        for (let x = 1; x < this.buffer.length; x++) {
+          this.ctx.lineTo(cx1 + x, mapRange(this.buffer[x], -1, 1, cy2, cy1));
+        }
+        this.ctx.stroke();
+        this.ctx.restore();
+
+        const lastPoint = this.buffer[this.buffer.length - 1];
+
+        this.ctx.save();
+        this.ctx.translate(
+          cx1 + this.buffer.length - 1 - this.blurredCircleRadius,
+          mapRange(lastPoint, -1, 1, cy2, cy1) - this.blurredCircleRadius
+        );
+        this.ctx.fillStyle = this.gradient;
+        this.ctx.fillRect(0, 0, this.blurredCircleRadius * 2, this.blurredCircleRadius * 2);
+        this.ctx.restore();
+      }
+
+      drawLog() {
+        const { w, h, pt, pb, pl, pr, cw, ch, cx1, cx2, cy1, cy2 } = this;
+        const tb = 3; // text baseline
+
+        this.ctx.save();
+        this.ctx.lineWidth = 1;
+
+        // min line
+        const yMin = mapRange(this.min, 0, 250, cy2, cy1);
+        this.ctx.strokeStyle = "#0088FF88";
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx1, yMin);
+        this.ctx.lineTo(cx2, yMin);
+        this.ctx.stroke();
+        this.ctx.fillStyle = "#0088FF";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText(`${this.min | 0} min`, cx2 + 5, yMin + tb + 12);
+
+        // avg line
+        const yAvg = mapRange(this.avg, 0, 250, cy2, cy1);
+        this.ctx.strokeStyle = "#88888888";
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx1, yAvg);
+        this.ctx.lineTo(cx2, yAvg);
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = "#888";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText(`${this.avg | 0} avg`, cx2 + 5, yAvg + tb + 0);
+
+        // max line
+        const yMax = mapRange(this.max, 0, 250, cy2, cy1);
+        this.ctx.strokeStyle = "#FF008888";
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx1, yMax);
+        this.ctx.lineTo(cx2, yMax);
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = "#FF0088";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText(`${this.max | 0} max`, cx2 + 5, yMax + tb - 12);
+
+        // current line
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = "#f22";
+        this.ctx.shadowBlur = 2;
+        this.ctx.shadowColor = "#ffffff";
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx1, mapRange(this.buffer2[0], 0, 250, cy2, cy1));
+        for (let i = 1; i < this.buffer2.length; i++) {
+          const x = mapRange(i, 0, this.buffer2.length, cx1, cx2);
+          const y = mapRange(this.buffer2[i], 0, 250, cy2, cy1);
+          this.ctx.lineTo(x, y);
+        }
+        this.ctx.stroke();
+
+        this.ctx.restore();
+      }
+
+      animateIcon() {
+        if (!this.heart) return;
+        const lastPoint = this.buffer[this.buffer.length - 1];
+        this.heartIcon.style.transform = `scale(${1 - 0.15 * lastPoint})`;
+      }
+
+      render() {
+        if (this.heart) {
+          this.measure();
+          this.log();
+        }
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawGrayLines();
+        this.drawPulse();
+        this.drawLog();
+        this.animateIcon();
+
+        window.setTimeout(this.render, 1000 / 60); // next frame
+      }
+
+      measure() {
+        // waveform
+        const value = this.heart.readSignal(); // sample the heart
+        this.buffer.push(value);
+        if (this.buffer.length > this.pulseWidth) {
+          this.buffer.shift(); // scroll
+        }
+      }
+
+      max = 0;
+      avg = 0;
+      min = 0;
+
+      #lastLog = 0;
+      log() {
+        const maxBufferDuration = 1000 * 60 * 60 * 1;
+        const logInterval = 50;
+        const now = Date.now();
+        if (now > this.#lastLog + logInterval) {
+          this.#lastLog = now;
+          // history line
+          const bpm = this.heart.getBpm(); // get the bpm number
+          this.buffer2.push(bpm);
+          if (this.buffer2.length > maxBufferDuration / logInterval) {
+            this.buffer2.shift(); // scroll
+          }
+
+          // calc statistics (min, max, avg)
+          const s = 3; // Smoothing factor 0=instant 1=faster >1=slower
+          if (bpm > this.max) this.max = bpm;
+          if (this.min === 0 || bpm < this.min) this.min = bpm;
+          if (this.avg === 0) this.avg = bpm;
+          this.avg = (this.avg * (1 - 1 / Math.pow(10, s))) + (bpm * (1 / Math.pow(10, s)));
+        }
+      }
+
+      attachHeart(heart) {
+        this.heart = heart;
+      }
+    }
+
+    class HeartRateMonitor {
+      constructor({ container, code, name }) {
+        console.log('[HeartRateMonitor] constructor', name, code);
+        this.code = code;
+        this.name = name;
+
+        this.container = typeof container === 'string' ? document.querySelector(container) : container;
+        if (!this.container) throw new Error('Cannot find container element!');
+        const template = document.querySelector('#template').innerHTML;
+        if (!template) throw new Error('Cannot find template!');
+
+        const div = document.createElement('div');
+        div.innerHTML = template;
+        this.el = div.firstElementChild;
+        this.container.appendChild(this.el);
+
+        this.heartRateElement = this.el.querySelector('[name="heartRate"]');
+        this.statsElement = this.el.querySelector('[name="stats"]');
+        this.statusElement = this.el.querySelector('[name="status"]');
+        this.slider = this.el.querySelector('[name="slider"]');
+        this.mode = this.el.querySelector('[name="mode"]:checked').value;
+
+        this.timestamp = null;
+        this.virtualHeart = new VirtualHeart();
+        this.ecgMonitor = new ECGMonitor(this.el);
+        this.ecgMonitor.attachHeart(this.virtualHeart);
+
+        this.simulationInterval = 500; // fetch data every few seconds
+
+        this.init();
+        this.simulated();
+      }
+
+      updateUI(bpm, _timestamp) {
+        this.timestamp = _timestamp;
+        this.virtualHeart.setBpm(bpm);
+        this.heartRateElement.innerText = `${bpm} BPM`;
+
+        this.statsElement.innerHTML = `
+          <span class="stat"> Min: <b>${this.ecgMonitor.min}</b> </span>
+          <span class="stat"> Average: <b>${parseInt(this.ecgMonitor.avg)}</b> </span>
+          <span class="stat"> Max: <b>${this.ecgMonitor.max}</b> </span>
+        `;
+
+      }
+
+      simulated() {
+        const mode = this.el.querySelector('[name="mode"]:checked').value;
+        if (mode === 'manual') {
+          let timestamp = new Date();
+          let bpm = parseInt(this.slider.value);
+          this.statusElement.innerText = `Manually set to ${bpm}`;
+          this.updateUI(bpm, timestamp);
+        } else if (mode === 'random') {
+          let timestamp = new Date();
+          let bpm = parseInt(this.slider.value);
+          bpm += mapRange(randomNormal(), -1, 1, -10, 10);
+          bpm = Math.round(clamp(bpm, 0, 250));
+          this.slider.value = bpm;
+          this.statusElement.innerText = 'Simulated';
+          this.updateUI(bpm, timestamp);
+        }
+
+        setTimeout(() => this.simulated(), this.simulationInterval);
+      }
+
+      init() {
+        console.log('[HeartRateMonitor] init');
+        const id = this.code;
+
+        const connect = () => {
+          this.socket = new WebSocket(`wss://lyall.lol:9007/${id}`);
+
+          let t;
+          let timeout = 11;
+
+          this.socket.addEventListener('open', () => {
+            console.log('[WebSocket] Connection established.');
+            this.heartRateElement.innerText = '...';
+            this.statusElement.innerText = this.name + ' Connection established!';
+            clearTimeout(t);
+          });
+
+          this.socket.addEventListener('message', (event) => {
+            console.log('[WebSocket] Received message:', event.data);
+            const mode = this.el.querySelector('[name="mode"]:checked').value;
+            if (mode === 'real') {
+              const timestamp = new Date();
+              this.updateUI(event.data, timestamp);
+              this.statusElement.innerText = this.name || '';
+            }
+            clearTimeout(t);
+          });
+
+          this.socket.addEventListener('close', () => {
+            console.log('[WebSocket] Connection closed.');
+            const retry = 3;
+
+            this.heartRateElement.innerText = '--';
+            this.statusElement.innerHTML = `Connection closed. <br> Reconnecting in ${retry}s...`;
+
+            setTimeout(connect, retry * 1000); // reconnect
+            setTimeout(kill, timeout * 1000);
+          });
+
+          this.socket.addEventListener('error', (error) => {
+            console.error('[WebSocket] Error:', error);
+            const retry = 30;
+
+            this.heartRateElement.innerText = '--';
+            this.statusElement.innerHTML = 'Error: ' + error + `<br> Retrying in ${retry}s...`;
+
+            this.updateUI(0, new Date());
+            setTimeout(connect, retry * 1000); // reconnect
+            setTimeout(kill, timeout * 1000);
+          });
+
+          const kill = () => {
+            this.heartRateElement.innerText = '--';
+            this.updateUI(0, new Date());
+          };
+        };
+
+        if (id) {
+          connect();
+        } else {
+          this.el.querySelector('[name="mode"][value="random"]').checked = true;
+        }
+
+        setInterval(() => {
+          this.el.querySelector('[name="timestamp"]').innerText = this.timestamp ? fromNow(this.timestamp) : '--';
+        }, 1000);
+      }
+    }
+
+
+    window.onload = () => {
+
+      const params = parseURLParams(location.search);
+      if (params.length) {
+        console.log('Parsed URL', params);
+        for (const person of params) {
+          new HeartRateMonitor({
+            container: '.container',
+            name: person.name,
+            code: person.key,
+          });
+        }
+      }
+      else{
+        console.log('DEMO MODE');
+        const heartRateMonitor1 = new HeartRateMonitor({container: '.container'});
+        const heartRateMonitor2 = new HeartRateMonitor({container: '.container'});
+      }
+      
+
+
+    };
+
+    // ========== helper functions ===========
+
+    function clamp(x, min, max) {
+      return x < min ? min : (x > max ? max : x);
+    }
+
+    function mapRange(x, inMin, inMax, outMin, outMax) {
+      return ((x - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
+    }
+
+    function randomNormal() {
+      var u = 0, v = 0;
+      while (u === 0) u = Math.random(); // Converting [0,1) to (0,1)
+      while (v === 0) v = Math.random();
+
+      var z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+      z = z / 6; // Adjust the scale to fit between -1 and 1
+
+      return z;
+    }
+
+    /**
+     * Human readable elapsed or remaining time (example: 3 minutes ago)
+     * @param  {Date|Number|String} date A Date object, timestamp or string parsable with Date.parse()
+     * @return {string} Human readable elapsed or remaining time
+     * @author github.com/victornpb
+     */
+    function fromNow(date) {
+      const SECOND = 1000;
+      const MINUTE = 60 * SECOND;
+      const HOUR = 60 * MINUTE;
+      const DAY = 24 * HOUR;
+      const WEEK = 7 * DAY;
+      const MONTH = 30 * DAY;
+      const YEAR = 365 * DAY;
+      const intervals = [
+        { ge: 2 * HOUR, divisor: HOUR, elapsed: '#h ago', remaining: 'in #h' },
+        { ge: HOUR, divisor: HOUR, elapsed: '#h ago', remaining: 'in #h' },
+        { ge: 2 * MINUTE, divisor: MINUTE, elapsed: '#m ago', remaining: 'in #m' },
+        { ge: MINUTE, divisor: MINUTE, elapsed: '#m ago', remaining: 'in a minute' },
+        { ge: 1 * SECOND, divisor: SECOND, elapsed: '#s ago', remaining: 'in #s' },
+        { ge: 0, divisor: 1, elapsed: 'just now', remaining: 'just now' },
+      ];
+      const diff = Date.now() - (typeof date === 'object' ? date : new Date(date)).getTime();
+      const diffAbs = Math.abs(diff);
+      for (const interval of intervals) {
+        if (diffAbs >= interval.ge) {
+          const x = Math.round(Math.abs(diff) / interval.divisor);
+          const isFuture = diff < 0;
+          return String(isFuture ? interval.remaining : interval.elapsed).replace('#', x);
+        }
+      }
+    }
+
+    function parseURLParams(search) {
+      if (!search || search.trim() === '') {
+        return [];
+      }
+
+      const params = search.startsWith('?') ? search.slice(1) : search;
+      const paramPairs = params.split(',');
+      const dataArray = [];
+
+      paramPairs.forEach((pair) => {
+        const [name, key] = pair.split('=');
+        const entry = {
+          name: key ? name : null,
+          key: key || name,
+        };
+        dataArray.push(entry);
+      });
+
+      return dataArray;
+    }
+
+
+  </script>
+</body>
+
+</html>
